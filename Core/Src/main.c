@@ -33,6 +33,7 @@
 #include "bsp_can.h"
 #include "bsp_delay.h"
 #include "calibrate_task.h"
+#include "bsp_buzzer.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -102,6 +103,7 @@ int main(void)
   MX_SPI1_Init();
   MX_TIM4_Init();
   MX_TIM5_Init();
+  MX_USART3_UART_Init();
   MX_TIM8_Init();
   MX_I2C3_Init();
   MX_RTC_Init();

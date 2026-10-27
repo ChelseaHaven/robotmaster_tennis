@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "detect_task.h"
 #include "INS_task.h"
 #include "cmsis_os.h"

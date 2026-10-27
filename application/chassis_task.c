@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "chassis_task.h"
 #include "CAN_receive.h"
 #include "detect_task.h"

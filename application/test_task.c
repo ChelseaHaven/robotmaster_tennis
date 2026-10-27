@@ -1,5 +1,5 @@
 /**
-  ****************************(C) COPYRIGHT 2019 DJI****************************
+  **************************(C) COPYRIGHT 2019 DJI****************************
   * @file       test_task.c/h
   * @brief      buzzer warning task.蜂鸣器报警任务
   * @note       
@@ -26,6 +26,15 @@
 static void buzzer_warn_error(uint8_t num);
 
 const error_t *error_list_test_local;
+static const char *const error_name[ERROR_LIST_LENGHT] = {
+    "CHASSIS_MOTOR1",
+    "CHASSIS_MOTOR2",
+    "CHASSIS_MOTOR3",
+    "CHASSIS_MOTOR4",
+    "GYRO",
+    "ACCEL",
+    "MAG",
+};
 
 
 
@@ -37,11 +46,11 @@ const error_t *error_list_test_local;
   */
 void test_task(void const * argument)
 {
-    static uint8_t error, last_error;
+    static uint8_t error;
     static uint8_t error_num;
     uint32_t last_print_tick = 0;
     error_list_test_local = get_error_list_point();
-
+    buzzer_play_startup_melody();
     while(1)
     {
         error = 0;
@@ -56,18 +65,12 @@ void test_task(void const * argument)
             }
         }
 
-        //没有错误, 停止蜂鸣器
-        if(error == 0 && last_error != 0)
-        {
-            buzzer_off();
-        }
         //有错误
         if(error)
         {
-            //buzzer_warn_error(error_num+1);
+            // buzzer_warn_error(error_num+1);
         }
 
-        last_error = error;
         if (xTaskGetTickCount() - last_print_tick >= pdMS_TO_TICKS(100))
         {
             const fp32 *angle = get_INS_angle_point();
@@ -76,6 +79,22 @@ void test_task(void const * argument)
                    angle[INS_YAW_ADDRESS_OFFSET] * 57.2957795f,
                    angle[INS_PITCH_ADDRESS_OFFSET] * 57.2957795f,
                    angle[INS_ROLL_ADDRESS_OFFSET] * 57.2957795f);
+
+            uint8_t has_error = 0;
+            for (uint8_t i = 0; i < ERROR_LIST_LENGHT; i++)
+            {
+                if (error_list_test_local[i].enable && error_list_test_local[i].error_exist)
+                {
+                    printf("ERROR: %s (id=%u, lost=%u)\r\n",
+                           error_name[i], (unsigned)i,
+                           (unsigned)error_list_test_local[i].is_lost);
+                    has_error = 1;
+                }
+            }
+            if (!has_error)
+            {
+                printf("ERROR: none\r\n");
+            }
         }
         osDelay(10);
     }
@@ -112,7 +131,7 @@ static void buzzer_warn_error(uint8_t num)
         }
         else if(tick < 100)
         {
-            buzzer_on(5, 30000);
+            buzzer_on(BUZZER_L3, 100);
         }
         else
         {
@@ -123,3 +142,4 @@ static void buzzer_warn_error(uint8_t num)
 }
 
 
+	

@@ -3,7 +3,6 @@
 
 
 extern CAN_HandleTypeDef hcan1;
-extern CAN_HandleTypeDef hcan2;
 
 void can_filter_init(void)
 {

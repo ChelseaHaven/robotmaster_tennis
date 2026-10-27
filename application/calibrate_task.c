@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "calibrate_task.h"
 #include "INS_task.h"
 #include "bsp_flash.h"
@@ -50,7 +51,7 @@ void calibrate_task(void const *argument)
             do
             {
                 INS_cali_gyro(gyro_cali.scale, gyro_cali.offset, &samples);
-                buzzer_on(95, 10000);
+                buzzer_on(1000, 30);
                 osDelay(1);
             } while (samples <= GYRO_CALI_SAMPLES);
             buzzer_off();

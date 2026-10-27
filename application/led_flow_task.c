@@ -14,6 +14,7 @@
   @endverbatim
   ****************************(C) COPYRIGHT 2019 DJI****************************
   */
+#include <stdio.h>
 #include "led_flow_task.h"
 #include "bsp_led.h"
 #include "cmsis_os.h"

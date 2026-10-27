@@ -237,7 +237,6 @@ void INS_task(void const *pvParameters)
 
 
         //加速度计低通滤波
-        //accel low-pass filter
         accel_fliter_1[0] = accel_fliter_2[0];
         accel_fliter_2[0] = accel_fliter_3[0];
 
@@ -306,7 +305,6 @@ static void imu_temp_control(fp32 temp)
     else
     {
         //在没有达到设置的温度，一直最大功率加热
-        //in beginning, max power
         if (temp > get_control_temperature())
         {
             temp_constant_time++;
