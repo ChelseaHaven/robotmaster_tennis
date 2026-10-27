@@ -11,6 +11,7 @@ enum errorList
     BOARD_GYRO_TOE,
     BOARD_ACCEL_TOE,
     BOARD_MAG_TOE,
+    REMOTE_TOE,
     ERROR_LIST_LENGHT,
 };
 

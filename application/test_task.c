@@ -23,6 +23,7 @@
 #include "detect_task.h"
 #include "INS_task.h"
 #include "CAN_receive.h"
+#include "remote_control.h"
 
 static void buzzer_warn_error(uint8_t num);
 
@@ -35,6 +36,7 @@ static const char *const error_name[ERROR_LIST_LENGHT] = {
     "GYRO",
     "ACCEL",
     "MAG",
+    "REMOTE",
 };
 
 
@@ -76,12 +78,17 @@ void test_task(void const * argument)
         if (xTaskGetTickCount() - last_print_tick >= pdMS_TO_TICKS(100))
         {
             last_print_tick = xTaskGetTickCount();
+
+
+            //////////////////////imu数据打印//////////////////////
             // const fp32 *angle = get_INS_angle_point();
             // printf("yaw:%.4f, pitch:%.4f, roll:%.4f\r\n",
             //        angle[INS_YAW_ADDRESS_OFFSET] * 57.2957795f,
             //        angle[INS_PITCH_ADDRESS_OFFSET] * 57.2957795f,
             //        angle[INS_ROLL_ADDRESS_OFFSET] * 57.2957795f);
 
+
+            ///////////////////////底盘电机数据打印//////////////////////
             int16_t speed_rpm[4];
             for (uint8_t i = 0; i < 4; ++i)
             {
@@ -89,12 +96,33 @@ void test_task(void const * argument)
                 speed_rpm[i] = motor->speed_rpm;
             }
             const float rpm_to_mps = 3.14159265358979323846f * 0.127f / (60.0f * 19.2f);
-
             printf("motor1:%.3f, motor2:%.3f, motor3:%.3f, motor4:%.3f m/s\r\n",
                 speed_rpm[0] * rpm_to_mps,
                 speed_rpm[1] * rpm_to_mps,
                 speed_rpm[2] * rpm_to_mps,
                 speed_rpm[3] * rpm_to_mps);
+
+
+            /////////////////////遥控器数据打印//////////////////////
+            // RC_ctrl_t remote;
+            // get_remote_control_snapshot(&remote);
+            // if (remote.valid)
+            // {
+            //     printf("RC CH1:%u CH2:%u CH3:%u CH4:%u CH5:%u CH6:%u CH7:%u CH8:%u "
+            //            "CH9:%u CH10:%u CH11:%u CH12:%u CH13:%u CH14:%u CH15:%u CH16:%u "
+            //            "CH17:%u CH18:%u\r\n",
+            //            (unsigned)remote.ch[0], (unsigned)remote.ch[1],
+            //            (unsigned)remote.ch[2], (unsigned)remote.ch[3],
+            //            (unsigned)remote.ch[4], (unsigned)remote.ch[5],
+            //            (unsigned)remote.ch[6], (unsigned)remote.ch[7],
+            //            (unsigned)remote.ch[8], (unsigned)remote.ch[9],
+            //            (unsigned)remote.ch[10], (unsigned)remote.ch[11],
+            //            (unsigned)remote.ch[12], (unsigned)remote.ch[13],
+            //            (unsigned)remote.ch[14], (unsigned)remote.ch[15],
+            //            (unsigned)remote.digital[0], (unsigned)remote.digital[1]);
+            // }
+
+
 
             uint8_t has_error = 0;
             for (uint8_t i = 0; i < ERROR_LIST_LENGHT; i++)

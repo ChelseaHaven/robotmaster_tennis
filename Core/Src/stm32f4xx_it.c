@@ -22,6 +22,7 @@
 #include "stm32f4xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "bsp_rc.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -260,5 +261,15 @@ void TIM6_DAC_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
+// USART3 和 DMA1 Stream1 由遥控器接收层统一处理。
+void USART3_IRQHandler(void)
+{
+    RC_uart_irq_handler();
+}
+
+void DMA1_Stream1_IRQHandler(void)
+{
+    RC_dma_irq_handler();
+}
 
 /* USER CODE END 1 */

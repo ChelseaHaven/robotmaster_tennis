@@ -34,6 +34,7 @@
 #include "bsp_delay.h"
 #include "calibrate_task.h"
 #include "bsp_buzzer.h"
+#include "remote_control.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -119,6 +120,7 @@ int main(void)
   HAL_TIM_PWM_Start(&htim10, TIM_CHANNEL_1); /* IMU heater */
   can_filter_init();
   cali_param_init();
+  remote_control_init();
   /* USER CODE END 2 */
 
   /* Call init function for freertos objects (in cmsis_os2.c) */

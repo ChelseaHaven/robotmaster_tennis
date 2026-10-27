@@ -51,6 +51,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     application/detect_task.c
     application/led_flow_task.c
     application/test_task.c
+    application/remote_control.c
     bsp/boards/bsp_buzzer.c
     bsp/boards/bsp_can.c
     bsp/boards/bsp_delay.c
@@ -58,6 +59,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     bsp/boards/bsp_imu_pwm.c
     bsp/boards/bsp_led.c
     bsp/boards/bsp_spi.c
+    bsp/boards/bsp_rc.c
     components/controller/pid.c
     components/algorithm/AHRS.c
     components/algorithm/AHRS_middleware.c
