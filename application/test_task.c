@@ -22,6 +22,7 @@
 #include "bsp_buzzer.h"
 #include "detect_task.h"
 #include "INS_task.h"
+#include "CAN_receive.h"
 
 static void buzzer_warn_error(uint8_t num);
 
@@ -51,6 +52,7 @@ void test_task(void const * argument)
     uint32_t last_print_tick = 0;
     error_list_test_local = get_error_list_point();
     buzzer_play_startup_melody();
+
     while(1)
     {
         error = 0;
@@ -70,15 +72,29 @@ void test_task(void const * argument)
         {
             // buzzer_warn_error(error_num+1);
         }
-
+        
         if (xTaskGetTickCount() - last_print_tick >= pdMS_TO_TICKS(100))
         {
-            const fp32 *angle = get_INS_angle_point();
             last_print_tick = xTaskGetTickCount();
-            printf("yaw:%.4f, pitch:%.4f, roll:%.4f\r\n",
-                   angle[INS_YAW_ADDRESS_OFFSET] * 57.2957795f,
-                   angle[INS_PITCH_ADDRESS_OFFSET] * 57.2957795f,
-                   angle[INS_ROLL_ADDRESS_OFFSET] * 57.2957795f);
+            // const fp32 *angle = get_INS_angle_point();
+            // printf("yaw:%.4f, pitch:%.4f, roll:%.4f\r\n",
+            //        angle[INS_YAW_ADDRESS_OFFSET] * 57.2957795f,
+            //        angle[INS_PITCH_ADDRESS_OFFSET] * 57.2957795f,
+            //        angle[INS_ROLL_ADDRESS_OFFSET] * 57.2957795f);
+
+            int16_t speed_rpm[4];
+            for (uint8_t i = 0; i < 4; ++i)
+            {
+                const motor_measure_t *motor = get_chassis_motor_measure_point(i);
+                speed_rpm[i] = motor->speed_rpm;
+            }
+            const float rpm_to_mps = 3.14159265358979323846f * 0.127f / (60.0f * 19.2f);
+
+            printf("motor1:%.3f, motor2:%.3f, motor3:%.3f, motor4:%.3f m/s\r\n",
+                speed_rpm[0] * rpm_to_mps,
+                speed_rpm[1] * rpm_to_mps,
+                speed_rpm[2] * rpm_to_mps,
+                speed_rpm[3] * rpm_to_mps);
 
             uint8_t has_error = 0;
             for (uint8_t i = 0; i < ERROR_LIST_LENGHT; i++)
@@ -93,7 +109,7 @@ void test_task(void const * argument)
             }
             if (!has_error)
             {
-                printf("ERROR: none\r\n");
+                // printf("ERROR: none\r\n");
             }
         }
         osDelay(10);
