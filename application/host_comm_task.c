@@ -5,13 +5,44 @@
 #include "queue.h"
 #include "cmsis_os.h"
 #include "main.h"
+#include "task.h"
 
 #define HOST_TX_QUEUE_DEPTH 8U
 #define HOST_RX_QUEUE_DEPTH 8U
 #define HOST_WHEEL_SPEED_PERIOD_MS 10U
-#define HOST_CMD_WHEEL_SPEED 0x0102U
 static QueueHandle_t tx_queue, rx_queue;
 static host_parser_t parser;
+static host_pose_t latest_pose;
+
+uint8_t host_comm_get_pose(host_pose_t *pose)
+{
+    if (!pose) return 0;
+    taskENTER_CRITICAL();
+    *pose = latest_pose;
+    uint32_t now_ms = HAL_GetTick();
+    taskEXIT_CRITICAL();
+    pose->valid = pose->received &&
+                  (uint32_t)(now_ms - pose->last_update_ms) < HOST_POSE_TIMEOUT_MS;
+    return pose->valid;
+}
+
+static void handle_received_packet(const host_packet_t *packet, uint32_t now_ms)
+{
+    host_lidar_pose_payload_t decoded;
+    if (!host_decode_lidar_pose(packet, &decoded)) return;
+
+    // 在原始接收队列入队前更新，业务未取队列时位姿仍能持续刷新。
+    taskENTER_CRITICAL();
+    latest_pose.x = decoded.x;
+    latest_pose.y = decoded.y;
+    latest_pose.yaw = decoded.yaw;
+    latest_pose.last_update_ms = now_ms;
+    latest_pose.sequence = packet->sequence;
+    latest_pose.received = 1;
+    latest_pose.valid = 1;
+    ++latest_pose.frame_count;
+    taskEXIT_CRITICAL();
+}
 
 uint8_t host_comm_init(void)
 {
@@ -68,8 +99,10 @@ void host_comm_task(void const *argument)
             count = bsp_host_uart_read(bytes, sizeof(bytes));
             if (!count) break;
             for (uint16_t i = 0; i < count; ++i) {
-                if (host_protocol_feed(&parser, bytes[i], HAL_GetTick(), &rx_packet))
+                if (host_protocol_feed(&parser, bytes[i], HAL_GetTick(), &rx_packet)) {
+                    handle_received_packet(&rx_packet, HAL_GetTick());
                     (void)xQueueSend(rx_queue, &rx_packet, 0);
+                }
             }
         }
         host_comm_send_periodic(HAL_GetTick());

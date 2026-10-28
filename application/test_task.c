@@ -24,6 +24,7 @@
 #include "INS_task.h"
 #include "CAN_receive.h"
 #include "remote_control.h"
+#include "host_comm_task.h"
 
 static void buzzer_warn_error(uint8_t num);
 
@@ -89,18 +90,18 @@ void test_task(void const * argument)
 
 
             ///////////////////////底盘电机数据打印//////////////////////
-            int16_t speed_rpm[4];
-            for (uint8_t i = 0; i < 4; ++i)
-            {
-                const motor_measure_t *motor = get_chassis_motor_measure_point(i);
-                speed_rpm[i] = motor->speed_rpm;
-            }
-            const float rpm_to_mps = 3.14159265358979323846f * 0.127f / (60.0f * 19.2f);
-            printf("motor1:%.3f, motor2:%.3f, motor3:%.3f, motor4:%.3f m/s\r\n",
-                speed_rpm[0] * rpm_to_mps,
-                speed_rpm[1] * rpm_to_mps,
-                speed_rpm[2] * rpm_to_mps,
-                speed_rpm[3] * rpm_to_mps);
+            // int16_t speed_rpm[4];
+            // for (uint8_t i = 0; i < 4; ++i)
+            // {
+            //     const motor_measure_t *motor = get_chassis_motor_measure_point(i);
+            //     speed_rpm[i] = motor->speed_rpm;
+            // }
+            // const float rpm_to_mps = 3.14159265358979323846f * 0.127f / (60.0f * 19.2f);
+            // printf("motor1:%.3f, motor2:%.3f, motor3:%.3f, motor4:%.3f m/s\r\n",
+            //     speed_rpm[0] * rpm_to_mps,
+            //     speed_rpm[1] * rpm_to_mps,
+            //     speed_rpm[2] * rpm_to_mps,
+            //     speed_rpm[3] * rpm_to_mps);
 
 
             /////////////////////遥控器数据打印//////////////////////
@@ -124,21 +125,31 @@ void test_task(void const * argument)
 
 
 
-            uint8_t has_error = 0;
-            for (uint8_t i = 0; i < ERROR_LIST_LENGHT; i++)
+            host_pose_t pose;
+            if (host_comm_get_pose(&pose))
             {
-                if (error_list_test_local[i].enable && error_list_test_local[i].error_exist)
-                {
-                    printf("ERROR: %s (id=%u, lost=%u)\r\n",
-                           error_name[i], (unsigned)i,
-                           (unsigned)error_list_test_local[i].is_lost);
-                    has_error = 1;
-                }
+                printf("x:%.3f, y:%.3f, yaw:%.3f\r\n",
+                    pose.x, pose.y, pose.yaw);
             }
-            if (!has_error)
-            {
-                // printf("ERROR: none\r\n");
-            }
+
+
+
+            // uint8_t has_error = 0;
+            // for (uint8_t i = 0; i < ERROR_LIST_LENGHT; i++)
+            // {
+            //     if (error_list_test_local[i].enable && error_list_test_local[i].error_exist)
+            //     {
+            //         printf("ERROR: %s (id=%u, lost=%u)\r\n",
+            //                error_name[i], (unsigned)i,
+            //                (unsigned)error_list_test_local[i].is_lost);
+            //         has_error = 1;
+            //     }
+            // }
+            // if (!has_error)
+            // {
+            //     // printf("ERROR: none\r\n");
+            // }
+            
         }
         osDelay(10);
     }

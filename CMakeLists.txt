@@ -54,6 +54,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     application/remote_control.c
     application/host_comm_task.c
     application/host_protocol.c
+    application/host_command.c
     components/algorithm/CRC8_CRC16.c
     bsp/boards/bsp_host_uart.c
     bsp/boards/bsp_buzzer.c

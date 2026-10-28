@@ -1,6 +1,24 @@
 #ifndef HOST_COMM_TASK_H
 #define HOST_COMM_TASK_H
 #include "host_protocol.h"
+#include "host_command.h"
+
+#define HOST_POSE_TIMEOUT_MS 500U
+
+/* 最新雷达位姿快照；超时只清除 valid，保留最后一次坐标。 */
+typedef struct {
+    float x;
+    float y;
+    float yaw;
+    uint32_t last_update_ms;  // 单片机收到并解析成功的时间
+    uint32_t frame_count;
+    uint8_t sequence;
+    uint8_t received;
+    uint8_t valid;
+} host_pose_t;
+
+/* 仅任务调用：复制最新位姿，收到且未超过 500 ms 返回 1，否则返回 0。 */
+uint8_t host_comm_get_pose(host_pose_t *pose);
 
 /* 由 main 在调度器启动前创建队列；返回 0 表示资源不足。 */
 uint8_t host_comm_init(void);
