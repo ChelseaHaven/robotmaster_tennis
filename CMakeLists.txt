@@ -52,6 +52,10 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     application/led_flow_task.c
     application/test_task.c
     application/remote_control.c
+    application/host_comm_task.c
+    application/host_protocol.c
+    components/algorithm/CRC8_CRC16.c
+    bsp/boards/bsp_host_uart.c
     bsp/boards/bsp_buzzer.c
     bsp/boards/bsp_can.c
     bsp/boards/bsp_delay.c
