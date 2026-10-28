@@ -12,35 +12,35 @@
 #define HOST_WHEEL_SPEED_PERIOD_MS 10U
 static QueueHandle_t tx_queue, rx_queue;
 static host_parser_t parser;
-static host_pose_t latest_pose;
+static host_velocity_t latest_velocity;
 
-uint8_t host_comm_get_pose(host_pose_t *pose)
+uint8_t host_comm_get_velocity(host_velocity_t *velocity)
 {
-    if (!pose) return 0;
+    if (!velocity) return 0;
     taskENTER_CRITICAL();
-    *pose = latest_pose;
+    *velocity = latest_velocity;
     uint32_t now_ms = HAL_GetTick();
     taskEXIT_CRITICAL();
-    pose->valid = pose->received &&
-                  (uint32_t)(now_ms - pose->last_update_ms) < HOST_POSE_TIMEOUT_MS;
-    return pose->valid;
+    velocity->valid = velocity->received &&
+                  (uint32_t)(now_ms - velocity->last_update_ms) < HOST_VELOCITY_TIMEOUT_MS;
+    return velocity->valid;
 }
 
 static void handle_received_packet(const host_packet_t *packet, uint32_t now_ms)
 {
-    host_lidar_pose_payload_t decoded;
-    if (!host_decode_lidar_pose(packet, &decoded)) return;
+    host_velocity_payload_t decoded;
+    if (!host_decode_velocity(packet, &decoded)) return;
 
-    // 在原始接收队列入队前更新，业务未取队列时位姿仍能持续刷新。
+    // 在原始接收队列入队前更新，业务未取队列时速度仍能持续刷新。
     taskENTER_CRITICAL();
-    latest_pose.x = decoded.x;
-    latest_pose.y = decoded.y;
-    latest_pose.yaw = decoded.yaw;
-    latest_pose.last_update_ms = now_ms;
-    latest_pose.sequence = packet->sequence;
-    latest_pose.received = 1;
-    latest_pose.valid = 1;
-    ++latest_pose.frame_count;
+    latest_velocity.vx = decoded.vx;
+    latest_velocity.vy = decoded.vy;
+    latest_velocity.wz = decoded.wz;
+    latest_velocity.last_update_ms = now_ms;
+    latest_velocity.sequence = packet->sequence;
+    latest_velocity.received = 1;
+    latest_velocity.valid = 1;
+    ++latest_velocity.frame_count;
     taskEXIT_CRITICAL();
 }
 
@@ -79,7 +79,7 @@ void host_comm_send_periodic(uint32_t now_ms)
         wheel_speed[i] = motor->speed_rpm * rpm_to_mps;
     }
 
-    // 命令 0x0102：电机 1～4 的四个小端 float32，共 16 字节，保留方向。
+    // 命令 0x0101：电机 1～4 的四个小端 float32，共 16 字节，保留方向。
     if (host_comm_send(HOST_CMD_WHEEL_SPEED, wheel_speed, sizeof(wheel_speed)))
         last_send_ms = now_ms;
 }

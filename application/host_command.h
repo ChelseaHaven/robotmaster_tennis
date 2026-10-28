@@ -2,19 +2,20 @@
 #define HOST_COMMAND_H
 #include "host_protocol.h"
 
-#define HOST_CMD_LIDAR_POSE 0x0101U
-#define HOST_LIDAR_POSE_PAYLOAD_SIZE 12U
-#define HOST_CMD_WHEEL_SPEED 0x0102U
+#define HOST_CMD_CHASSIS_VELOCITY 0x0101U
+#define HOST_VELOCITY_PAYLOAD_SIZE 12U
+// 按传输方向区分：下行三轴目标速度 12 字节，上行四轮反馈速度 16 字节。
+#define HOST_CMD_WHEEL_SPEED 0x0101U
 
-/* 3566 下发的雷达位姿：odom 坐标系下 laser 的位置和朝向。
- * yaw 绕 +Z 逆时针为正，单位 rad，发送端范围为 -pi～pi。
+/* 3566 下发车体系速度：vx 向前、vy 向左、wz 逆时针为正。
+ * 单位依次为 m/s、m/s、rad/s。命令 0x0101 已由位姿改为速度。
  * 线上格式为三个小端 IEEE 754 float32，不直接映射结构体。 */
 typedef struct {
-    float x;    // 单位 m
-    float y;    // 单位 m
-    float yaw;  // 单位 rad
-} host_lidar_pose_payload_t;
+    float vx;    // 单位 m/s
+    float vy;    // 单位 m/s
+    float wz;  // 单位 rad/s
+} host_velocity_payload_t;
 
 /* 仅解析命令 0x0101，检查长度及浮点数有效性，失败时不修改输出。 */
-uint8_t host_decode_lidar_pose(const host_packet_t *packet, host_lidar_pose_payload_t *pose);
+uint8_t host_decode_velocity(const host_packet_t *packet, host_velocity_payload_t *velocity);
 #endif

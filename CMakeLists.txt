@@ -48,6 +48,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     application/INS_task.c
     application/calibrate_task.c
     application/chassis_task.c
+    application/chassis_behaviour.c
     application/detect_task.c
     application/led_flow_task.c
     application/test_task.c

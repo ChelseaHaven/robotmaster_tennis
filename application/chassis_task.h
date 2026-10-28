@@ -1,8 +1,8 @@
 #ifndef CHASSIS_TASK_H
 #define CHASSIS_TASK_H
-#include "struct_typedef.h"
+#include "chassis_behaviour.h"
 
-// 速度单位为 m/s、m/s、rad/s；未设置时默认为零。
-void chassis_set_velocity(fp32 vx, fp32 vy, fp32 wz);
+/* 底盘速度由 SWD 三档统一仲裁，任务外不直接覆盖目标速度。 */
+void chassis_get_control(chassis_control_t *control);
 void chassis_task(void const *argument);
 #endif

@@ -3,22 +3,22 @@
 #include "host_protocol.h"
 #include "host_command.h"
 
-#define HOST_POSE_TIMEOUT_MS 500U
+#define HOST_VELOCITY_TIMEOUT_MS 500U
 
-/* 最新雷达位姿快照；超时只清除 valid，保留最后一次坐标。 */
+/* 最新车体系速度快照；超时只清除 valid，保留最后一次速度。 */
 typedef struct {
-    float x;
-    float y;
-    float yaw;
+    float vx;
+    float vy;
+    float wz;
     uint32_t last_update_ms;  // 单片机收到并解析成功的时间
     uint32_t frame_count;
     uint8_t sequence;
     uint8_t received;
     uint8_t valid;
-} host_pose_t;
+} host_velocity_t;
 
-/* 仅任务调用：复制最新位姿，收到且未超过 500 ms 返回 1，否则返回 0。 */
-uint8_t host_comm_get_pose(host_pose_t *pose);
+/* 仅任务调用：复制最新速度，收到且未超过 500 ms 返回 1，否则返回 0。 */
+uint8_t host_comm_get_velocity(host_velocity_t *velocity);
 
 /* 由 main 在调度器启动前创建队列；返回 0 表示资源不足。 */
 uint8_t host_comm_init(void);

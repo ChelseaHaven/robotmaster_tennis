@@ -90,18 +90,18 @@ void test_task(void const * argument)
 
 
             ///////////////////////底盘电机数据打印//////////////////////
-            // int16_t speed_rpm[4];
-            // for (uint8_t i = 0; i < 4; ++i)
-            // {
-            //     const motor_measure_t *motor = get_chassis_motor_measure_point(i);
-            //     speed_rpm[i] = motor->speed_rpm;
-            // }
-            // const float rpm_to_mps = 3.14159265358979323846f * 0.127f / (60.0f * 19.2f);
-            // printf("motor1:%.3f, motor2:%.3f, motor3:%.3f, motor4:%.3f m/s\r\n",
-            //     speed_rpm[0] * rpm_to_mps,
-            //     speed_rpm[1] * rpm_to_mps,
-            //     speed_rpm[2] * rpm_to_mps,
-            //     speed_rpm[3] * rpm_to_mps);
+            int16_t speed_rpm[4];
+            for (uint8_t i = 0; i < 4; ++i)
+            {
+                const motor_measure_t *motor = get_chassis_motor_measure_point(i);
+                speed_rpm[i] = motor->speed_rpm;
+            }
+            const float rpm_to_mps = 3.14159265358979323846f * 0.127f / (60.0f * 19.2f);
+            printf("motor1:%.3f, motor2:%.3f, motor3:%.3f, motor4:%.3f m/s\r\n",
+                speed_rpm[0] * rpm_to_mps,
+                speed_rpm[1] * rpm_to_mps,
+                speed_rpm[2] * rpm_to_mps,
+                speed_rpm[3] * rpm_to_mps);
 
 
             /////////////////////遥控器数据打印//////////////////////
@@ -125,12 +125,12 @@ void test_task(void const * argument)
 
 
 
-            host_pose_t pose;
-            if (host_comm_get_pose(&pose))
-            {
-                printf("x:%.3f, y:%.3f, yaw:%.3f\r\n",
-                    pose.x, pose.y, pose.yaw);
-            }
+            // host_velocity_t velocity;
+            // if (host_comm_get_velocity(&velocity))
+            // {
+            //     printf("vx:%.3f, vy:%.3f, wz:%.3f\r\n",
+            //         velocity.vx, velocity.vy, velocity.wz);
+            // }
 
 
 

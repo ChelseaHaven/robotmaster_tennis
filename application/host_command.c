@@ -4,7 +4,7 @@
 #include <string.h>
 
 _Static_assert(sizeof(float) == 4 && FLT_RADIX == 2 && FLT_MANT_DIG == 24 &&
-               FLT_MAX_EXP == 128, "Host pose requires IEEE 754 binary32");
+               FLT_MAX_EXP == 128, "Host velocity requires IEEE 754 binary32");
 
 static float read_float_le(const uint8_t *data)
 {
@@ -15,18 +15,18 @@ static float read_float_le(const uint8_t *data)
     return value;
 }
 
-uint8_t host_decode_lidar_pose(const host_packet_t *packet, host_lidar_pose_payload_t *pose)
+uint8_t host_decode_velocity(const host_packet_t *packet, host_velocity_payload_t *velocity)
 {
-    if (!packet || !pose || packet->command != HOST_CMD_LIDAR_POSE ||
-        packet->length != HOST_LIDAR_POSE_PAYLOAD_SIZE)
+    if (!packet || !velocity || packet->command != HOST_CMD_CHASSIS_VELOCITY ||
+        packet->length != HOST_VELOCITY_PAYLOAD_SIZE)
         return 0;
-    host_lidar_pose_payload_t decoded = {
-        .x = read_float_le(packet->payload),
-        .y = read_float_le(packet->payload + 4),
-        .yaw = read_float_le(packet->payload + 8),
+    host_velocity_payload_t decoded = {
+        .vx = read_float_le(packet->payload),
+        .vy = read_float_le(packet->payload + 4),
+        .wz = read_float_le(packet->payload + 8),
     };
-    if (!isfinite(decoded.x) || !isfinite(decoded.y) || !isfinite(decoded.yaw))
+    if (!isfinite(decoded.vx) || !isfinite(decoded.vy) || !isfinite(decoded.wz))
         return 0;
-    *pose = decoded;
+    *velocity = decoded;
     return 1;
 }
