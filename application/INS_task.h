@@ -54,7 +54,23 @@
 #define MPU6500_TEMP_PWM_MAX 5000 //mpu6500控制温度的设置TIM的重载值，即给PWM最大为 MPU6500_TEMP_PWM_MAX - 1
 
 
+// 采集用于原始数据上发，与是否参与姿态融合独立。
+#define INS_SAMPLE_MAGNETOMETER 1
 #define INS_USE_MAGNETOMETER 0
+#define INS_RAW_DATA_TIMEOUT_MS 100U
+
+typedef struct {
+    fp32 gyro[3];   // 传感器轴 XYZ，rad/s，未加软件零偏或安装旋转
+    fp32 accel[3];  // 传感器轴 XYZ，m/s²，含重力，未低通或去重力
+    fp32 mag[3];    // 传感器轴 XYZ，uT，未做磁场校准
+    uint32_t last_update_ms;
+    uint8_t ready;
+    uint8_t mag_valid;
+} INS_raw_data_t;
+
+/* 仅任务调用，复制一致快照；无数据或 BMI088 超时返回 0。
+ * 磁力计不可用时 mag_valid 为 0，mag 三轴填零。 */
+uint8_t get_INS_raw_data_snapshot(INS_raw_data_t *snapshot);
 
 #define INS_TASK_INIT_TIME 7 //任务开始初期 delay 一段时间
 

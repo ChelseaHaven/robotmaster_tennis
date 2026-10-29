@@ -35,4 +35,7 @@ extern void ist8310_delay_us(uint16_t us);
 extern void ist8310_RST_H(void); //复位IO 置高
 extern void ist8310_RST_L(void); //复位IO 置地 置地会引起ist8310重启
 
+/* 有状态返回的多字节读取，任务中调用，超时 3 ms。 */
+uint8_t ist8310_IIC_read_muli_reg_checked(uint8_t reg, uint8_t *buf, uint8_t len);
+
 #endif

@@ -138,6 +138,43 @@ static const fp32 fliter_num[3] = {1.929454039488895f, -0.93178349823448126f, 0.
 static fp32 INS_gyro[3] = {0.0f, 0.0f, 0.0f};
 static fp32 INS_accel[3] = {0.0f, 0.0f, 0.0f};
 static fp32 INS_mag[3] = {0.0f, 0.0f, 0.0f};
+static INS_raw_data_t raw_data_snapshot;
+static uint8_t raw_mag_valid;
+static uint32_t raw_mag_update_ms;
+
+static void publish_raw_data(void)
+{
+    uint32_t now = HAL_GetTick();
+    uint8_t mag_valid = raw_mag_valid &&
+                        (uint32_t)(now - raw_mag_update_ms) < INS_RAW_DATA_TIMEOUT_MS;
+    taskENTER_CRITICAL();
+    for (unsigned i = 0; i < 3; ++i) {
+        raw_data_snapshot.gyro[i] = bmi088_real_data.gyro[i];
+        raw_data_snapshot.accel[i] = bmi088_real_data.accel[i];
+        raw_data_snapshot.mag[i] = mag_valid ? ist8310_real_data.mag[i] : 0.0f;
+    }
+    raw_data_snapshot.last_update_ms = now;
+    raw_data_snapshot.ready = 1;
+    raw_data_snapshot.mag_valid = mag_valid;
+    taskEXIT_CRITICAL();
+}
+
+uint8_t get_INS_raw_data_snapshot(INS_raw_data_t *snapshot)
+{
+    if (!snapshot) return 0;
+    taskENTER_CRITICAL();
+    *snapshot = raw_data_snapshot;
+    uint32_t now = HAL_GetTick();
+    taskEXIT_CRITICAL();
+    snapshot->ready = snapshot->ready &&
+                      (uint32_t)(now - snapshot->last_update_ms) < INS_RAW_DATA_TIMEOUT_MS;
+    if (!snapshot->ready) {
+        snapshot->mag_valid = 0;
+        for (unsigned i = 0; i < 3; ++i) snapshot->mag[i] = 0.0f;
+    }
+    return snapshot->ready;
+}
+
 static fp32 INS_quat[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 fp32 INS_angle[3] = {0.0f, 0.0f, 0.0f};      //euler angle, unit rad.欧拉角 单位 rad
 
@@ -160,17 +197,23 @@ void INS_task(void const *pvParameters)
     {
         osDelay(100);
     }
+    uint8_t mag_initialized = 0;
+#if INS_SAMPLE_MAGNETOMETER || INS_USE_MAGNETOMETER
+    // 原始采集初始化失败时仍运行 BMI088，不阻塞整个姿态任务。
 #if INS_USE_MAGNETOMETER
-    while(ist8310_init())
-    {
-        osDelay(100);
-    }
+    while (ist8310_init() != IST8310_NO_ERROR) osDelay(100);
+    mag_initialized = 1;
+#else
+    mag_initialized = ist8310_init() == IST8310_NO_ERROR;
+#endif
 #endif
 
     BMI088_read(bmi088_real_data.gyro, bmi088_real_data.accel, &bmi088_real_data.temp);
-#if INS_USE_MAGNETOMETER
-    ist8310_read_mag(ist8310_real_data.mag);
-#endif
+    if (mag_initialized) {
+        raw_mag_valid = ist8310_read_mag_checked(ist8310_real_data.mag);
+        if (raw_mag_valid) raw_mag_update_ms = HAL_GetTick();
+    }
+    publish_raw_data();
     //rotate and zero drift 
     imu_cali_slove(INS_gyro, INS_accel, INS_mag, &bmi088_real_data, &ist8310_real_data);
 
@@ -224,13 +267,15 @@ void INS_task(void const *pvParameters)
             imu_temp_control(bmi088_real_data.temp);
         }
 
-#if INS_USE_MAGNETOMETER
-        if (mag_update_flag & (1U << IMU_DR_SHFITS))
+#if INS_SAMPLE_MAGNETOMETER || INS_USE_MAGNETOMETER
+        if (mag_initialized && (mag_update_flag & (1U << IMU_DR_SHFITS)))
         {
             mag_update_flag &= ~(1U << IMU_DR_SHFITS);
-            ist8310_read_mag(ist8310_real_data.mag);
+            raw_mag_valid = ist8310_read_mag_checked(ist8310_real_data.mag);
+            if (raw_mag_valid) raw_mag_update_ms = HAL_GetTick();
         }
 #endif
+        publish_raw_data();
 
         //rotate and zero drift 
         imu_cali_slove(INS_gyro, INS_accel, INS_mag, &bmi088_real_data, &ist8310_real_data);
@@ -278,7 +323,13 @@ static void imu_cali_slove(fp32 gyro[3], fp32 accel[3], fp32 mag[3], bmi088_real
     {
         gyro[i] = bmi088->gyro[0] * gyro_scale_factor[i][0] + bmi088->gyro[1] * gyro_scale_factor[i][1] + bmi088->gyro[2] * gyro_scale_factor[i][2] + gyro_offset[i];
         accel[i] = bmi088->accel[0] * accel_scale_factor[i][0] + bmi088->accel[1] * accel_scale_factor[i][1] + bmi088->accel[2] * accel_scale_factor[i][2] + accel_offset[i];
-        mag[i] = ist8310->mag[0] * mag_scale_factor[i][0] + ist8310->mag[1] * mag_scale_factor[i][1] + ist8310->mag[2] * mag_scale_factor[i][2] + mag_offset[i];
+#if INS_USE_MAGNETOMETER
+        mag[i] = raw_mag_valid ?
+                 ist8310->mag[0] * mag_scale_factor[i][0] + ist8310->mag[1] * mag_scale_factor[i][1] + ist8310->mag[2] * mag_scale_factor[i][2] + mag_offset[i] : 0.0f;
+#else
+        (void)ist8310;
+        mag[i] = 0.0f;
+#endif
     }
 }
 

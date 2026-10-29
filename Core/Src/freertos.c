@@ -30,6 +30,7 @@
 #include "detect_task.h"
 #include "INS_task.h"
 #include "led_flow_task.h"
+#include "voltage_task.h"
 #include "host_comm_task.h"
 /* USER CODE END Includes */
 
@@ -55,6 +56,7 @@ osThreadId chassisHandle;
 osThreadId detectHandle;
 osThreadId imuHandle;
 osThreadId ledHandle;
+osThreadId batteryVoltageHandle;
 osThreadId hostCommHandle;
 /* USER CODE END Variables */
 osThreadId testHandle;
@@ -132,6 +134,9 @@ void MX_FREERTOS_Init(void) {
   testHandle = osThreadCreate(osThread(test), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
+  osThreadDef(battery_voltage, battery_voltage_task, osPriorityNormal, 0, 128);
+  batteryVoltageHandle = osThreadCreate(osThread(battery_voltage), NULL);
+
   osThreadDef(host_comm, host_comm_task, osPriorityNormal, 0, 512);
   hostCommHandle = osThreadCreate(osThread(host_comm), NULL);
 

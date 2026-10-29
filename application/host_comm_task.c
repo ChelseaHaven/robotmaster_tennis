@@ -1,6 +1,7 @@
 #include "host_comm_task.h"
 #include "bsp_host_uart.h"
 #include "CAN_receive.h"
+#include "INS_task.h"
 #include "FreeRTOS.h"
 #include "queue.h"
 #include "cmsis_os.h"
@@ -10,6 +11,7 @@
 #define HOST_TX_QUEUE_DEPTH 8U
 #define HOST_RX_QUEUE_DEPTH 8U
 #define HOST_WHEEL_SPEED_PERIOD_MS 10U
+#define HOST_IMU_RAW_PERIOD_MS 10U
 static QueueHandle_t tx_queue, rx_queue;
 static host_parser_t parser;
 static host_velocity_t latest_velocity;
@@ -66,22 +68,35 @@ uint8_t host_comm_receive(host_packet_t *packet)
 }
 void host_comm_send_periodic(uint32_t now_ms)
 {
-    static uint32_t last_send_ms;
-    if ((uint32_t)(now_ms - last_send_ms) < HOST_WHEEL_SPEED_PERIOD_MS)
-        return;
-
-    // 127 mm 轮径、19.2 减速比：电机转速换算为轮缘线速度，单位 m/s。
-    const float rpm_to_mps = 3.14159265358979323846f * 0.127f / (60.0f * 19.2f);
-    float wheel_speed[4];
-    for (uint8_t i = 0; i < 4; ++i)
-    {
-        const motor_measure_t *motor = get_chassis_motor_measure_point(i);
-        wheel_speed[i] = motor->speed_rpm * rpm_to_mps;
+    static uint32_t last_wheel_send_ms;
+    static uint32_t last_imu_send_ms;
+    if ((uint32_t)(now_ms - last_wheel_send_ms) >= HOST_WHEEL_SPEED_PERIOD_MS) {
+        // 127 mm 轮径、19.2 减速比，轮缘速度单位 m/s。
+        const float rpm_to_mps = 3.14159265358979323846f * 0.127f / (60.0f * 19.2f);
+        float wheel_speed[4];
+        for (uint8_t i = 0; i < 4; ++i) {
+            const motor_measure_t *motor = get_chassis_motor_measure_point(i);
+            wheel_speed[i] = motor->speed_rpm * rpm_to_mps;
+        }
+        if (host_comm_send(HOST_CMD_WHEEL_SPEED, wheel_speed, sizeof(wheel_speed)))
+            last_wheel_send_ms = now_ms;
     }
 
-    // 命令 0x0101：电机 1～4 的四个小端 float32，共 16 字节，保留方向。
-    if (host_comm_send(HOST_CMD_WHEEL_SPEED, wheel_speed, sizeof(wheel_speed)))
-        last_send_ms = now_ms;
+    if ((uint32_t)(now_ms - last_imu_send_ms) >= HOST_IMU_RAW_PERIOD_MS) {
+        INS_raw_data_t raw;
+        if (get_INS_raw_data_snapshot(&raw)) {
+            float values[9];
+            for (unsigned i = 0; i < 3; ++i) {
+                values[i] = raw.gyro[i];
+                values[3+i] = raw.accel[i];
+                values[6+i] = raw.mag[i];
+            }
+            _Static_assert(sizeof(values) == HOST_IMU_RAW_PAYLOAD_SIZE, "IMU payload must be 36 bytes");
+            // 0x0102：角速度 XYZ、加速度 XYZ、磁力计 XYZ，九个小端 float32。
+            if (host_comm_send(HOST_CMD_IMU_RAW, values, sizeof(values)))
+                last_imu_send_ms = now_ms;
+        }
+    }
 }
 void host_comm_task(void const *argument)
 {

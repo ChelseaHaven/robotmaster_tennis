@@ -35,7 +35,7 @@ void ist8310_com_init(void)
 
 uint8_t ist8310_IIC_read_single_reg(uint8_t reg)
 {
-    uint8_t res;
+    uint8_t res = 0;
     HAL_I2C_Mem_Read(&hi2c3, IST8310_IIC_ADDRESS, reg, I2C_MEMADD_SIZE_8BIT, &res, 1, 100);
     return res;
 }
@@ -68,4 +68,10 @@ void ist8310_RST_H(void)
 extern void ist8310_RST_L(void)
 {
     HAL_GPIO_WritePin(RSTN_IST8310_GPIO_Port, RSTN_IST8310_Pin, GPIO_PIN_RESET);
+}
+
+uint8_t ist8310_IIC_read_muli_reg_checked(uint8_t reg, uint8_t *buf, uint8_t len)
+{
+    return HAL_I2C_Mem_Read(&hi2c3, IST8310_IIC_ADDRESS, reg,
+                            I2C_MEMADD_SIZE_8BIT, buf, len, 3) == HAL_OK;
 }

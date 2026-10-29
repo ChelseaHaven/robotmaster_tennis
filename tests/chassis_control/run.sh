@@ -17,3 +17,8 @@ cc -std=c11 -Wall -Wextra -Werror -fsanitize=undefined \
   "$project_dir/application/chassis_task.c" \
   "$project_dir/components/controller/pid.c" -lm -o "$work_dir/task"
 "$work_dir/task"
+cc -std=c11 -Wall -Wextra -Werror -fsanitize=undefined \
+  -I"$project_dir/tests/chassis_control/stubs" -I"$project_dir/application" \
+  "$project_dir/tests/chassis_control/can_feedback_test.c" \
+  "$project_dir/application/CAN_receive.c" -o "$work_dir/can_feedback"
+"$work_dir/can_feedback"

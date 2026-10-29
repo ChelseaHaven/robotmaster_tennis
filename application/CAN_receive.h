@@ -4,9 +4,10 @@
 
 typedef struct
 {
-    // 电调原始反馈，角度、转速和电流均保留电调方向。
+    // 角度、电流和 raw_speed_rpm 保留电调原始方向。
     uint16_t ecd;
-    int16_t speed_rpm;
+    int16_t raw_speed_rpm; // 原始转速，供现有轮速闭环使用
+    int16_t speed_rpm;     // 显示和上发转速，1、4 号取反，前进时四轮同为正
     int16_t given_current;
     uint8_t temperate;
     int16_t last_ecd;

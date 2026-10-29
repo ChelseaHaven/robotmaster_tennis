@@ -86,7 +86,7 @@ void chassis_task(void const *argument)
                 continue;
             }
             const motor_measure_t *motor = get_chassis_motor_measure_point(i);
-            current[i] = (int16_t)PID_calc(&speed_pid[i], motor->speed_rpm * RPM_TO_MPS, wheel[i]);
+            current[i] = (int16_t)PID_calc(&speed_pid[i], motor->raw_speed_rpm * RPM_TO_MPS, wheel[i]);
         }
         // printf("curent: %d, %d, %d, %d\r\n", (int)current[0], (int)current[1], (int)current[2], (int)current[3]);
         CAN_cmd_chassis(current[0], current[1], current[2], current[3]);

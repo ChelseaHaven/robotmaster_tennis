@@ -3,6 +3,7 @@
 #include "INS_task.h"
 #include "cmsis_os.h"
 #include "remote_control.h"
+#include "calibrate_task.h"
 #include "main.h"
 
 static error_t error_list[ERROR_LIST_LENGHT];
@@ -51,6 +52,7 @@ void detect_task(void const *argument)
                 RC_ctrl_t remote;
                 remote_control_service();
                 get_remote_control_snapshot(&remote);
+                // calibrate_remote_control_update(&remote);
                 error_list[i].is_lost = !remote.received ||
                     (uint32_t)(HAL_GetTick() - remote.last_update_ms) >= offline_ms[i];
                 error_list[i].error_exist = !remote.valid;

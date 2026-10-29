@@ -52,6 +52,8 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     application/detect_task.c
     application/led_flow_task.c
     application/test_task.c
+    application/voltage_task.c
+    bsp/boards/bsp_adc.c
     application/remote_control.c
     application/host_comm_task.c
     application/host_protocol.c

@@ -17,7 +17,12 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
     motor_measure_t *motor = &motor_chassis[index];
     motor->last_ecd = motor->ecd;
     motor->ecd = ((uint16_t)data[0] << 8) | data[1];
-    motor->speed_rpm = (int16_t)(((uint16_t)data[2] << 8) | data[3]);
+    motor->raw_speed_rpm = (int16_t)(((uint16_t)data[2] << 8) | data[3]);
+    int32_t display_rpm = motor->raw_speed_rpm;
+    if (index == 0U || index == 3U) display_rpm = -display_rpm;
+    // 极端值 -32768 取反后按 int16_t 正上限饱和，避免显示仍为负。
+    if (display_rpm > INT16_MAX) display_rpm = INT16_MAX;
+    motor->speed_rpm = (int16_t)display_rpm;
     motor->given_current = (int16_t)(((uint16_t)data[4] << 8) | data[5]);
     motor->temperate = data[6];
     detect_hook(CHASSIS_MOTOR1_TOE + index);

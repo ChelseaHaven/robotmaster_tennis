@@ -31,10 +31,10 @@ void osDelay(uint32_t period)
         assert(state.mode==CHASSIS_ESTOP_MODE);stopped();remote.ch[7]=992;break;
     case 1:
         assert(state.mode==CHASSIS_REMOTE_MODE);stopped();remote.ch[2]=1792;
-        motors[1].speed_rpm=-32768;break;
+        motors[1].raw_speed_rpm=-32768;break;
     case 2:
         assert(currents[0]<0 && currents[1]>0 && currents[2]>0 && currents[3]<0);
-        assert(currents[1]==12288);motors[1].speed_rpm=0;
+        assert(currents[1]==12288);motors[1].raw_speed_rpm=0;
         remote.ch[2]=992;remote.ch[3]=1792;break;
     case 3:
         assert(currents[0]>0 && currents[1]>0 && currents[2]<0 && currents[3]<0);

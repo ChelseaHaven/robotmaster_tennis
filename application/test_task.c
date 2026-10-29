@@ -25,6 +25,7 @@
 #include "CAN_receive.h"
 #include "remote_control.h"
 #include "host_comm_task.h"
+#include "voltage_task.h"
 
 static void buzzer_warn_error(uint8_t num);
 
@@ -43,6 +44,86 @@ static const char *const error_name[ERROR_LIST_LENGHT] = {
 
 
 
+/* 以下打印函数仅在本文件使用，按需在任务循环中启用。 */
+
+// 打印 IMU 姿态角，单位为度。
+static inline void test_print_imu(void)
+{
+    const fp32 *angle = get_INS_angle_point();
+    printf("yaw:%.4f, pitch:%.4f, roll:%.4f\r\n",
+           angle[INS_YAW_ADDRESS_OFFSET] * 57.2957795f,
+           angle[INS_PITCH_ADDRESS_OFFSET] * 57.2957795f,
+           angle[INS_ROLL_ADDRESS_OFFSET] * 57.2957795f);
+}
+
+// 一行打印四轮编码器换算的线速度，单位 m/s。
+static inline void test_print_motor_speed(void)
+{
+    int16_t speed_rpm[4];
+    for (uint8_t i = 0; i < 4; ++i)
+    {
+        const motor_measure_t *motor = get_chassis_motor_measure_point(i);
+        speed_rpm[i] = motor->speed_rpm;
+    }
+    const float rpm_to_mps = 3.14159265358979323846f * 0.127f / (60.0f * 19.2f);
+    printf("motor1:%.3f, motor2:%.3f, motor3:%.3f, motor4:%.3f m/s\r\n",
+           speed_rpm[0] * rpm_to_mps,
+           speed_rpm[1] * rpm_to_mps,
+           speed_rpm[2] * rpm_to_mps,
+           speed_rpm[3] * rpm_to_mps);
+}
+
+// 遥控器有效时，一行打印所有 SBUS 原始通道。
+static inline void test_print_remote(void)
+{
+    RC_ctrl_t remote;
+    get_remote_control_snapshot(&remote);
+    if (!remote.valid) return;
+    printf("RC CH1:%u CH2:%u CH3:%u CH4:%u CH5:%u CH6:%u CH7:%u CH8:%u "
+           "CH9:%u CH10:%u CH11:%u CH12:%u CH13:%u CH14:%u CH15:%u CH16:%u "
+           "CH17:%u CH18:%u\r\n",
+           (unsigned)remote.ch[0], (unsigned)remote.ch[1],
+           (unsigned)remote.ch[2], (unsigned)remote.ch[3],
+           (unsigned)remote.ch[4], (unsigned)remote.ch[5],
+           (unsigned)remote.ch[6], (unsigned)remote.ch[7],
+           (unsigned)remote.ch[8], (unsigned)remote.ch[9],
+           (unsigned)remote.ch[10], (unsigned)remote.ch[11],
+           (unsigned)remote.ch[12], (unsigned)remote.ch[13],
+           (unsigned)remote.ch[14], (unsigned)remote.ch[15],
+           (unsigned)remote.digital[0], (unsigned)remote.digital[1]);
+}
+
+// 打印 3566 下发的有效目标速度，单位 m/s、m/s、rad/s。
+static inline void test_print_host_velocity(void)
+{
+    host_velocity_t velocity;
+    if (!host_comm_get_velocity(&velocity)) return;
+    printf("vx:%.3f, vy:%.3f, wz:%.3f\r\n",
+           velocity.vx, velocity.vy, velocity.wz);
+}
+
+// 打印电池电压和大疆公式估算的电量百分比。
+static inline void test_print_battery(void)
+{
+    printf("battery: %.2f V, %u%%\r\n",
+           (double)battery_voltage,
+           (unsigned)get_battery_percentage());
+}
+
+// 打印当前启用设备的错误；无错误时保持静默。
+static inline void test_print_errors(void)
+{
+    const error_t *error_list = get_error_list_point();
+    for (uint8_t i = 0; i < ERROR_LIST_LENGHT; ++i)
+    {
+        if (error_list[i].enable && error_list[i].error_exist)
+        {
+            printf("ERROR: %s (id=%u, lost=%u)\r\n",
+                   error_name[i], (unsigned)i, (unsigned)error_list[i].is_lost);
+        }
+    }
+}
+
 /**
   * @brief          test任务
   * @param[in]      pvParameters: NULL
@@ -53,11 +134,20 @@ void test_task(void const * argument)
     static uint8_t error;
     static uint8_t error_num;
     uint32_t last_print_tick = 0;
+    uint8_t battery_alarm_active = 0;
     error_list_test_local = get_error_list_point();
     buzzer_play_startup_melody();
 
     while(1)
     {
+        // 大疆 voltage_task 的估算电量低于 20% 时，沿用已有蜂鸣报警。
+        if (battery_voltage > 1.0f && get_battery_percentage() < 20U) {
+            buzzer_warn_error(1);
+            battery_alarm_active = 1;
+        } else if (battery_alarm_active) {
+            buzzer_off();
+            battery_alarm_active = 0;
+        }
         error = 0;
 
         //发现错误
@@ -81,75 +171,13 @@ void test_task(void const * argument)
             last_print_tick = xTaskGetTickCount();
 
 
-            //////////////////////imu数据打印//////////////////////
-            // const fp32 *angle = get_INS_angle_point();
-            // printf("yaw:%.4f, pitch:%.4f, roll:%.4f\r\n",
-            //        angle[INS_YAW_ADDRESS_OFFSET] * 57.2957795f,
-            //        angle[INS_PITCH_ADDRESS_OFFSET] * 57.2957795f,
-            //        angle[INS_ROLL_ADDRESS_OFFSET] * 57.2957795f);
-
-
-            ///////////////////////底盘电机数据打印//////////////////////
-            int16_t speed_rpm[4];
-            for (uint8_t i = 0; i < 4; ++i)
-            {
-                const motor_measure_t *motor = get_chassis_motor_measure_point(i);
-                speed_rpm[i] = motor->speed_rpm;
-            }
-            const float rpm_to_mps = 3.14159265358979323846f * 0.127f / (60.0f * 19.2f);
-            printf("motor1:%.3f, motor2:%.3f, motor3:%.3f, motor4:%.3f m/s\r\n",
-                speed_rpm[0] * rpm_to_mps,
-                speed_rpm[1] * rpm_to_mps,
-                speed_rpm[2] * rpm_to_mps,
-                speed_rpm[3] * rpm_to_mps);
-
-
-            /////////////////////遥控器数据打印//////////////////////
-            // RC_ctrl_t remote;
-            // get_remote_control_snapshot(&remote);
-            // if (remote.valid)
-            // {
-            //     printf("RC CH1:%u CH2:%u CH3:%u CH4:%u CH5:%u CH6:%u CH7:%u CH8:%u "
-            //            "CH9:%u CH10:%u CH11:%u CH12:%u CH13:%u CH14:%u CH15:%u CH16:%u "
-            //            "CH17:%u CH18:%u\r\n",
-            //            (unsigned)remote.ch[0], (unsigned)remote.ch[1],
-            //            (unsigned)remote.ch[2], (unsigned)remote.ch[3],
-            //            (unsigned)remote.ch[4], (unsigned)remote.ch[5],
-            //            (unsigned)remote.ch[6], (unsigned)remote.ch[7],
-            //            (unsigned)remote.ch[8], (unsigned)remote.ch[9],
-            //            (unsigned)remote.ch[10], (unsigned)remote.ch[11],
-            //            (unsigned)remote.ch[12], (unsigned)remote.ch[13],
-            //            (unsigned)remote.ch[14], (unsigned)remote.ch[15],
-            //            (unsigned)remote.digital[0], (unsigned)remote.digital[1]);
-            // }
-
-
-
-            // host_velocity_t velocity;
-            // if (host_comm_get_velocity(&velocity))
-            // {
-            //     printf("vx:%.3f, vy:%.3f, wz:%.3f\r\n",
-            //         velocity.vx, velocity.vy, velocity.wz);
-            // }
-
-
-
-            // uint8_t has_error = 0;
-            // for (uint8_t i = 0; i < ERROR_LIST_LENGHT; i++)
-            // {
-            //     if (error_list_test_local[i].enable && error_list_test_local[i].error_exist)
-            //     {
-            //         printf("ERROR: %s (id=%u, lost=%u)\r\n",
-            //                error_name[i], (unsigned)i,
-            //                (unsigned)error_list_test_local[i].is_lost);
-            //         has_error = 1;
-            //     }
-            // }
-            // if (!has_error)
-            // {
-            //     // printf("ERROR: none\r\n");
-            // }
-            
+            // 按需取消注释，每组打印保持在 100 ms 周期内。
+            // test_print_imu();
+            test_print_motor_speed();
+            // test_print_remote();
+            // test_print_host_velocity();
+            // test_print_battery();
+            // test_print_errors();
         }
         osDelay(10);
     }
