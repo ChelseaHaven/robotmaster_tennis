@@ -3,6 +3,4 @@
 #include "struct_typedef.h"
 
 
-
-
 #endif

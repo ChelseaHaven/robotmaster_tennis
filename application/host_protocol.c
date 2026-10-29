@@ -17,6 +17,13 @@ uint16_t host_protocol_pack(uint8_t *out, uint16_t command, uint8_t sequence,
     append_CRC16_check_sum(out, length + HOST_FRAME_OVERHEAD);
     return length + HOST_FRAME_OVERHEAD;
 }
+
+/**
+  * @brief          丢弃解析缓冲区前部字节并前移剩余数据
+  * @param[in,out]  p: 解析器状态
+  * @param[in]      count: 丢弃字节数，不超过当前已缓存长度
+  * @retval         无
+  */
 static void discard(host_parser_t *p, uint16_t count)
 {
     p->used -= count;

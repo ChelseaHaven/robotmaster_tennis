@@ -17,16 +17,49 @@ typedef struct {
     uint8_t valid;
 } host_velocity_t;
 
-/* 仅任务调用：复制最新速度，收到且未超过 500 ms 返回 1，否则返回 0。 */
+/**
+  * @brief          在任务中复制上位机最新速度及有效状态
+  * @param[out]     velocity: 车体系速度快照；超时仍保留上次速度值
+  * @retval         1：已接收且未超时；0：空指针、未接收或超时
+  */
 uint8_t host_comm_get_velocity(host_velocity_t *velocity);
 
-/* 由 main 在调度器启动前创建队列；返回 0 表示资源不足。 */
+/**
+  * @brief          在调度器启动前创建上位机通信收发队列
+  * @retval         1：队列可用；0：队列创建失败
+  */
 uint8_t host_comm_init(void);
+
+/**
+  * @brief          运行上位机串口收包、协议解析、周期上发和 DMA 发送调度
+  * @param[in]      argument: 任务参数，未使用
+  * @retval         无
+  */
 void host_comm_task(void const *argument);
-/* 仅任务调用：复制数据入队，不等待；成功返回 1，未初始化、队列满或参数错误返回 0。 */
+
+/**
+  * @brief          复制待发数据到发送队列，由通信任务统一发送
+  * @param[in]      command: 命令号
+  * @param[in]      payload: 数据载荷，长度为 0 时允许为 NULL
+  * @param[in]      length: 载荷字节数，不超过 HOST_MAX_PAYLOAD
+  * @note           仅任务调用，非阻塞，允许多个任务调用。
+  * @retval         1：成功入队；0：参数错误、队列未创建或队列已满
+  */
 uint8_t host_comm_send(uint16_t command, const void *payload, uint16_t length);
-/* 仅任务调用：非阻塞取出一帧，成功返回 1。队列满时丢弃新收到的帧。 */
+
+/**
+  * @brief          在任务中非阻塞取出一帧已校验的接收数据
+  * @param[out]     packet: 完整接收包
+  * @note           接收队列满时丢弃新帧；速度缓存仍会独立更新。
+  * @retval         1：取到一帧；0：队列为空、未创建或参数无效
+  */
 uint8_t host_comm_receive(host_packet_t *packet);
-/* 在通信任务中每轮调用，留作周期发送入口；不要阻塞。 */
+
+/**
+  * @brief          按各自周期将轮速和 IMU 原始数据加入发送队列
+  * @param[in]      now_ms: 当前主控时间，单位 ms
+  * @note           由通信任务调用，当前两类数据均按 10 ms 周期上发。
+  * @retval         无
+  */
 void host_comm_send_periodic(uint32_t now_ms);
 #endif

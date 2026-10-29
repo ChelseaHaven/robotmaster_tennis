@@ -6,6 +6,11 @@
 _Static_assert(sizeof(float) == 4 && FLT_RADIX == 2 && FLT_MANT_DIG == 24 &&
                FLT_MAX_EXP == 128, "Host velocity requires IEEE 754 binary32");
 
+/**
+  * @brief          将四字节小端数据还原为单精度浮点数
+  * @param[in]      data: 至少 4 字节的小端数据
+  * @retval         还原后的浮点数
+  */
 static float read_float_le(const uint8_t *data)
 {
     uint32_t bits = (uint32_t)data[0] | ((uint32_t)data[1] << 8) |

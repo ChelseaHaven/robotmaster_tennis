@@ -27,13 +27,30 @@ typedef struct
     uint32_t receive_errors;       /* UART/DMA 接收错误计数 */
 } RC_ctrl_t;
 
-/* USART3、DMA 初始化后、调度器启动前调用一次。 */
+/**
+  * @brief          初始化遥控器解析状态并启动 USART3 双缓冲 DMA 接收
+  * @note           在 USART3 和 DMA 初始化后、调度器启动前调用。
+  * @retval         无
+  */
 void remote_control_init(void);
-/* 在主函数或任务中获取一致快照；即使 valid 为 0，也保留上一帧通道供诊断。 */
+
+/**
+  * @brief          复制遥控器各通道及接收状态的一致快照
+  * @param[out]     snapshot: 遥控器快照；无效时保留上一帧通道供诊断
+  * @retval         无
+  */
 void get_remote_control_snapshot(RC_ctrl_t *snapshot);
-/* 返回 1 表示未接收、超时、丢帧或失控保护；返回 0 表示可用。 */
+
+/**
+  * @brief          检查遥控器是否未接收、超时、丢帧或进入失控保护
+  * @retval         1：不可用；0：有效
+  */
 uint8_t RC_data_is_error(void);
-/* 由现有 detect_task 周期调用，在接收故障后尝试恢复。 */
+
+/**
+  * @brief          在任务中检查遥控器接收故障并尝试重启 DMA
+  * @retval         无
+  */
 void remote_control_service(void);
 
 #endif

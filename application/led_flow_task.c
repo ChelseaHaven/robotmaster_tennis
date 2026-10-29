@@ -2,7 +2,7 @@
   ****************************(C) COPYRIGHT 2019 DJI****************************
   * @file       led_trigger_task.c/h
   * @brief      led RGB show.led RGB灯效。
-  * @note       
+  * @note
   * @history
   *  Version    Date            Author          Modification
   *  V1.0.0     Nov-11-2019     RM              1. rgb led
@@ -23,15 +23,10 @@
 
 #define RGB_FLOW_COLOR_CHANGE_TIME  1000
 #define RGB_FLOW_COLOR_LENGHT   6
-//蓝 -> 绿(灭) -> 红 -> 蓝(灭) -> 绿 -> 红(灭) -> 蓝 
+//蓝 -> 绿(灭) -> 红 -> 蓝(灭) -> 绿 -> 红(灭) -> 蓝
 uint32_t RGB_flow_color[RGB_FLOW_COLOR_LENGHT + 1] = {0xFF0000FF, 0x0000FF00, 0xFFFF0000, 0x000000FF, 0xFF00FF00, 0x00FF0000, 0xFF0000FF};
 
 
-/**
-  * @brief          led RGB任务
-  * @param[in]      pvParameters: NULL
-  * @retval         none
-  */
 void led_RGB_flow_task(void const * argument)
 {
     uint16_t i, j;
@@ -72,5 +67,3 @@ void led_RGB_flow_task(void const * argument)
         }
     }
 }
-
-

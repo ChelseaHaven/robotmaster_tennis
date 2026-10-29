@@ -10,6 +10,11 @@ static RC_ctrl_t rc_ctrl;
 static uint8_t frame_buffer[RC_FRAME_LENGTH];
 static uint8_t frame_used;
 
+/**
+  * @brief          清除遥控器帧状态并记录接收故障
+  * @param[in]      reason: 接收错误位掩码，当前仅累计错误次数
+  * @retval         无
+  */
 static void receive_error(uint32_t reason)
 {
     (void)reason;
@@ -18,6 +23,11 @@ static void receive_error(uint32_t reason)
     frame_used = 0;
 }
 
+/**
+  * @brief          将一个 SBUS 字节送入解析器，完整帧到达时更新通道
+  * @param[in]      byte: 收到的字节
+  * @retval         无
+  */
 static void parse_byte(uint8_t byte)
 {
     if (frame_used == 0U && byte != 0x0FU) return;
@@ -55,6 +65,12 @@ static void parse_byte(uint8_t byte)
     memmove(frame_buffer, frame_buffer + next, frame_used);
 }
 
+/**
+  * @brief          在遥控器接收回调中逐字节解析新数据
+  * @param[in]      data: DMA 接收数据
+  * @param[in]      length: 本次有效字节数
+  * @retval         无
+  */
 static void receive_bytes(volatile const uint8_t *data, uint16_t length)
 {
     for (uint16_t i = 0; i < length; ++i) parse_byte(data[i]);

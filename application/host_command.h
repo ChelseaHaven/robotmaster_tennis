@@ -18,6 +18,11 @@ typedef struct {
     float wz;  // 单位 rad/s
 } host_velocity_payload_t;
 
-/* 仅解析命令 0x0101，检查长度及浮点数有效性，失败时不修改输出。 */
+/**
+  * @brief          解析下行车体系速度并检查命令号、长度和有限数值
+  * @param[in]      packet: 已校验的协议包
+  * @param[out]     velocity: 三轴目标速度，失败时保持原值
+  * @retval         1：解析成功；0：参数或数据无效
+  */
 uint8_t host_decode_velocity(const host_packet_t *packet, host_velocity_payload_t *velocity);
 #endif

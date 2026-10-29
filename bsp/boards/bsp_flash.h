@@ -33,60 +33,59 @@
 #define ADDR_FLASH_SECTOR_23 ((uint32_t)0x081E0000) /* Base address of Sector 23, 128 Kbytes */
 
 
-
-
 /**
-  * @brief          擦除flash
-  * @param[in]      address: flash 地址
-  * @param[in]      len: 页数量
-  * @retval         none
+  * @brief          从指定地址所在扇区开始擦除 Flash
+  * @param[in]      address: 起始 Flash 地址
+  * @param[in]      len: 连续擦除的扇区数量
+  * @retval         无
   */
 extern void flash_erase_address(uint32_t address, uint16_t len);
 
 
 /**
-  * @brief          往一页flash写数据
-  * @param[in]      start_address: flash 地址
-  * @param[in]      buf: 数据指针
-  * @param[in]      len: 数据长度
-  * @retval         success 0, fail -1
+  * @brief          在起始地址所在扇区内按 32 位字写入 Flash
+  * @param[in]      start_address: 起始地址
+  * @param[in]      buf: 待写入数据
+  * @param[in]      len: 32 位字数量
+  * @note           调用前须擦除目标区域，数据范围应位于该扇区内。
+  * @retval         0：未遇到编程错误；-1：编程失败
   */
 extern int8_t flash_write_single_address(uint32_t start_address, uint32_t *buf, uint32_t len);
 
 
-
 /**
-  * @brief          往几页flash写数据
-  * @param[in]      start_address: flash 开始地址
-  * @param[in]      end_address: flash 结束地址
-  * @param[in]      buf: 数据指针
-  * @param[in]      len: 数据长度
-  * @retval         success 0, fail -1
+  * @brief          在给定地址范围内按 32 位字写入 Flash
+  * @param[in]      start_address: 起始地址
+  * @param[in]      end_address: 允许写入的最后一个字的地址
+  * @param[in]      buf: 待写入数据
+  * @param[in]      len: 32 位字数量
+  * @note           调用前须擦除目标区域，地址范围应容纳全部数据。
+  * @retval         0：未遇到编程错误；-1：编程失败
   */
 extern int8_t flash_write_muli_address(uint32_t start_address, uint32_t end_address, uint32_t *buf, uint32_t len);
 
 
 /**
-  * @brief          从flash读数据
-  * @param[in]      start_address: flash 地址
-  * @param[out]     buf: 数据指针
-  * @param[in]      len: 数据长度
-  * @retval         none
+  * @brief          从 Flash 复制指定数量的 32 位字
+  * @param[in]      address: Flash 起始地址
+  * @param[out]     buf: 目标缓冲区
+  * @param[in]      len: 32 位字数量
+  * @retval         无
   */
 extern void flash_read(uint32_t address, uint32_t *buf, uint32_t len);
 
 
 /**
-  * @brief          获取flash的sector号
-  * @param[in]      address: flash 地址
-  * @retval         sector号
+  * @brief          查询 Flash 地址所在的扇区编号
+  * @param[in]      address: Flash 地址
+  * @retval         HAL 扇区编号；未匹配前 11 个扇区时返回扇区 11
   */
 extern uint32_t ger_sector(uint32_t address);
 
 /**
-  * @brief          获取下一页flash地址
-  * @param[in]      address: flash 地址
-  * @retval         下一页flash地址
+  * @brief          查询当前 Flash 扇区的结束边界
+  * @param[in]      address: Flash 地址
+  * @retval         下一扇区起始地址或 FLASH_END_ADDR
   */
 extern uint32_t get_next_flash_address(uint32_t address);
 

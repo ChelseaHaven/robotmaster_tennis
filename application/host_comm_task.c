@@ -28,6 +28,12 @@ uint8_t host_comm_get_velocity(host_velocity_t *velocity)
     return velocity->valid;
 }
 
+/**
+  * @brief          解析下行速度帧并更新缓存及接收计数
+  * @param[in]      packet: 通过帧校验的数据包
+  * @param[in]      now_ms: 当前主控时间，单位 ms
+  * @retval         无
+  */
 static void handle_received_packet(const host_packet_t *packet, uint32_t now_ms)
 {
     host_velocity_payload_t decoded;

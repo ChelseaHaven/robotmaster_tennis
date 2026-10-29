@@ -42,8 +42,15 @@ typedef struct {
     uint32_t host_entry_frame;
 } chassis_behaviour_t;
 
-/* 无独立线程，由底盘任务每轮调用；遥控失联、未知档位输出急停。
- * 最外档进入后必须收到新速度帧，才允许使用上位机命令。 */
+/**
+  * @brief          仲裁急停、遥控和上位机速度指令并进行限幅
+  * @param[in,out]  behaviour: 模式切换状态
+  * @param[in]      remote: 遥控器快照
+  * @param[in]      host: 上位机速度快照
+  * @param[out]     control: 当前模式及车体速度指令
+  * @note           遥控失联时急停；切入上位机模式后等待一帧新的有效速度指令。
+  * @retval         无
+  */
 void chassis_behaviour_update(chassis_behaviour_t *behaviour,
                               const RC_ctrl_t *remote,
                               const host_velocity_t *host,

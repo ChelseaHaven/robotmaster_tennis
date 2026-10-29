@@ -18,7 +18,7 @@ void AHRS_init(fp32 quat[4], const fp32 accel[3], const fp32 mag[3])
 bool_t AHRS_update(fp32 quat[4], const fp32 timing_time,
                    const fp32 gyro[3], const fp32 accel[3], const fp32 mag[3])
 {
-    (void)timing_time; /* Mahony source is configured for the 1 kHz INS task. */
+    (void)timing_time; /* Mahony 固定按 1 kHz 解算。 */
     MahonyAHRSupdate(quat, gyro[0], gyro[1], gyro[2],
                      accel[0], accel[1], accel[2], mag[0], mag[1], mag[2]);
     return 1;

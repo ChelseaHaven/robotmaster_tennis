@@ -2,7 +2,7 @@
   ****************************(C) COPYRIGHT 2019 DJI****************************
   * @file       led_trigger_task.c/h
   * @brief      led RGB show.led RGB灯效。
-  * @note       
+  * @note
   * @history
   *  Version    Date            Author          Modification
   *  V1.0.0     Nov-11-2019     RM              1. rgb led
@@ -22,13 +22,10 @@
 
 
 /**
-  * @brief          led RGB任务
-  * @param[in]      pvParameters: NULL
-  * @retval         none
+  * @brief          周期改变 RGB 灯颜色，形成渐变流水效果
+  * @param[in]      argument: 任务参数，未使用
+  * @retval         无
   */
 extern void led_RGB_flow_task(void const * argument);
 
 #endif
-
-
-

@@ -4,9 +4,9 @@
 
 
 /**
-  * @brief          显示RGB
-  * @param[in]      aRGB:0xaaRRGGBB,'aa' 是透明度,'RR'是红色,'GG'是绿色,'BB'是蓝色
-  * @retval         none
+  * @brief          根据颜色和亮度设置 RGB 指示灯 PWM
+  * @param[in]      aRGB: 0xAARRGGBB 格式；AA 缩放亮度，RR、GG、BB 为三色分量
+  * @retval         无
   */
 extern void aRGB_led_show(uint32_t aRGB);
 

@@ -1,8 +1,7 @@
 /**
   ****************************(C) COPYRIGHT 2016 DJI****************************
   * @file       IST8310middleware.c/h
-  * @brief      IST8310磁力计中间层，完成IST8310的IIC通信,因为设置MPU6500的SPI通信
-  *             所以设置的是通过mpu6500的IIC_SLV0完成读取，IIC_SLV4完成写入。
+  * @brief      IST8310 磁力计中间层，通过 I2C3 完成寄存器通信。
   * @note       IST8310只支持IIC读取
   * @history
   *  Version    Date            Author          Modification

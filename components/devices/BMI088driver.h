@@ -87,26 +87,107 @@ enum
 };
 
 
-
-
-
+/**
+  * @brief          执行 BMI088 自检并初始化加速度计和陀螺仪
+  * @retval         0：成功；非 0：BMI088 错误码或错误位组合
+  */
 extern uint8_t BMI088_init(void);
+
+/**
+  * @brief          执行 BMI088 加速度计硬件自检
+  * @retval         0：自检通过；非 0：自检错误码
+  */
 extern bool_t bmi088_accel_self_test(void);
+
+/**
+  * @brief          执行 BMI088 陀螺仪硬件自检
+  * @retval         0：自检通过；非 0：自检错误码
+  */
 extern bool_t bmi088_gyro_self_test(void);
+
+/**
+  * @brief          复位并配置 BMI088 加速度计，读回校验寄存器
+  * @retval         0：成功；非 0：初始化错误码
+  */
 extern bool_t bmi088_accel_init(void);
+
+/**
+  * @brief          复位并配置 BMI088 陀螺仪，读回校验寄存器
+  * @retval         0：成功；非 0：初始化错误码
+  */
 extern bool_t bmi088_gyro_init(void);
 
+/**
+  * @brief          解析 BMI088 加速度和传感器时间
+  * @param[in]      rx_buf: 加速度寄存器起始的 9 字节数据
+  * @param[out]     accel: 三轴加速度，单位 m/s²
+  * @param[out]     time: 传感器时间，单位 μs
+  * @retval         无
+  */
 extern void BMI088_accel_read_over(uint8_t *rx_buf, fp32 accel[3], fp32 *time);
+
+/**
+  * @brief          解析 BMI088 陀螺仪接收数据
+  * @param[in]      rx_buf: 角速度寄存器起始的 6 字节数据
+  * @param[out]     gyro: 三轴角速度，单位 rad/s
+  * @retval         无
+  */
 extern void BMI088_gyro_read_over(uint8_t *rx_buf, fp32 gyro[3]);
+
+/**
+  * @brief          解析 BMI088 温度接收数据
+  * @param[in]      rx_buf: 温度寄存器起始的 2 字节数据
+  * @param[out]     temperate: 温度，单位 ℃
+  * @retval         无
+  */
 extern void BMI088_temperature_read_over(uint8_t *rx_buf, fp32 *temperate);
+
+/**
+  * @brief          通过阻塞 SPI 读取 BMI088 角速度、加速度和温度
+  * @param[out]     gyro: 三轴角速度，单位 rad/s，芯片 ID 无效时保持原值
+  * @param[out]     accel: 三轴加速度，单位 m/s²
+  * @param[out]     temperate: 温度，单位 ℃
+  * @retval         无
+  */
 extern void BMI088_read(fp32 gyro[3], fp32 accel[3], fp32 *temperate);
+
+/**
+  * @brief          读取 BMI088 传感器时间寄存器
+  * @retval         24 位原始计数，每计数约 39.0625 μs
+  */
 extern uint32_t get_BMI088_sensor_time(void);
+
+/**
+  * @brief          读取 BMI088 温度
+  * @retval         传感器温度，单位 ℃
+  */
 extern fp32 get_BMI088_temperate(void);
+
+/**
+  * @brief          读取 BMI088 原始三轴陀螺仪计数
+  * @param[out]     gyro: 三轴有符号原始计数，尚未换算 rad/s
+  * @retval         无
+  */
 extern void get_BMI088_gyro(int16_t gyro[3]);
+
+/**
+  * @brief          读取并换算 BMI088 三轴加速度
+  * @param[out]     accel: 三轴加速度，单位 m/s²
+  * @retval         无
+  */
 extern void get_BMI088_accel(fp32 accel[3]);
 
 
+/**
+  * @brief          读取并缓存 BMI088 陀螺仪芯片 ID，供调试查看
+  * @retval         无
+  */
 extern void BMI088_read_gyro_who_am_i(void);
+
+/**
+  * @brief          读取并缓存 BMI088 加速度计芯片 ID，供调试查看
+  * @retval         无
+  */
 extern void BMI088_read_accel_who_am_i(void);
 
 #endif

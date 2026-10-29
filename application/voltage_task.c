@@ -18,19 +18,11 @@ static fp32 calc_battery_percentage(float voltage);
 fp32 battery_voltage;
 fp32 electricity_percentage;
 
-void battery_voltage_task(void const * argument)
-{
-    osDelay(1000);
-
-    init_vrefint_reciprocal();
-    while(1)
-    {
-        battery_voltage = get_battery_voltage() + VOLTAGE_DROP;
-        electricity_percentage = calc_battery_percentage(battery_voltage);
-        osDelay(100);
-    }
-}
-
+/**
+  * @brief          按大疆分段多项式计算电池剩余电量比例
+  * @param[in]      voltage: 电池电压，单位 V
+  * @retval         限制到 0～1 的估算电量比例
+  */
 static fp32 calc_battery_percentage(float voltage)
 {
     fp32 percentage;
@@ -68,4 +60,17 @@ static fp32 calc_battery_percentage(float voltage)
 uint16_t get_battery_percentage(void)
 {
     return (uint16_t)(electricity_percentage * 100.0f);
+}
+
+void battery_voltage_task(void const * argument)
+{
+    osDelay(1000);
+
+    init_vrefint_reciprocal();
+    while(1)
+    {
+        battery_voltage = get_battery_voltage() + VOLTAGE_DROP;
+        electricity_percentage = calc_battery_percentage(battery_voltage);
+        osDelay(100);
+    }
 }

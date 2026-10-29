@@ -22,6 +22,12 @@ uint8_t bsp_host_uart_init(void)
     return !fault;
 }
 
+/**
+  * @brief          将 USART6 DMA 新增数据搬入接收环形缓冲区
+  * @param[in]      uart: 串口句柄
+  * @param[in]      size: HAL 事件位置，本实现改读 DMA 实时游标
+  * @retval         无
+  */
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *uart, uint16_t size)
 {
     (void)size;
@@ -39,10 +45,22 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *uart, uint16_t size)
         dma_position = (dma_position + 1U) % RX_DMA_SIZE;
     }
 }
+
+/**
+  * @brief          在 USART6 发送完成后释放发送缓冲区
+  * @param[in]      uart: 串口句柄
+  * @retval         无
+  */
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *uart)
 {
     if (uart == &huart6) tx_busy = 0;
 }
+
+/**
+  * @brief          记录 USART6 错误，交由通信任务恢复
+  * @param[in]      uart: 串口句柄
+  * @retval         无
+  */
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *uart)
 {
     if (uart == &huart6) fault = 1;

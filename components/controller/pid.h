@@ -2,7 +2,7 @@
   ****************************(C) COPYRIGHT 2016 DJI****************************
   * @file       pid.c/h
   * @brief      pid实现函数，包括初始化，PID计算函数，
-  * @note       
+  * @note
   * @history
   *  Version    Date            Author          Modification
   *  V1.0.0     Dec-26-2018     RM              1. 完成
@@ -47,32 +47,31 @@ typedef struct
 } pid_type_def;
 
 /**
-  * @brief          pid struct data init
-  * @param[out]     pid: PID结构数据指针
-  * @param[in]      mode: PID_POSITION:普通PID
-  *                 PID_DELTA: 差分PID
-  * @param[in]      PID: 0: kp, 1: ki, 2:kd
-  * @param[in]      max_out: pid最大输出
-  * @param[in]      max_iout: pid最大积分输出
-  * @retval         none
+  * @brief          初始化 PID 参数、模式、限幅及内部状态
+  * @param[out]     pid: PID 状态
+  * @param[in]      mode: PID_POSITION 位置式或 PID_DELTA 增量式
+  * @param[in]      PID: 比例、积分、微分系数数组
+  * @param[in]      max_out: 输出绝对值上限
+  * @param[in]      max_iout: 积分输出绝对值上限
+  * @retval         无
   */
 extern void PID_init(pid_type_def *pid, uint8_t mode, const fp32 PID[3], fp32 max_out, fp32 max_iout);
 
 
 /**
-  * @brief          pid计算
-  * @param[out]     pid: PID结构数据指针
-  * @param[in]      ref: 反馈数据
-  * @param[in]      set: 设定值
-  * @retval         pid输出
+  * @brief          更新一次 PID 计算并限制输出
+  * @param[in,out]  pid: PID 参数与状态
+  * @param[in]      ref: 反馈值
+  * @param[in]      set: 目标值
+  * @retval         本次 PID 输出
   */
 extern fp32 PID_calc(pid_type_def *pid, fp32 ref, fp32 set);
 
 
 /**
-  * @brief          pid 输出清除
-  * @param[out]     pid: PID结构数据指针
-  * @retval         none
+  * @brief          清零 PID 误差和输出状态，保留系数及限幅
+  * @param[in,out]  pid: PID 状态
+  * @retval         无
   */
 extern void PID_clear(pid_type_def *pid);
 

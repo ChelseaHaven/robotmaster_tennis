@@ -7,7 +7,6 @@ fp32 BMI088_ACCEL_SEN = BMI088_ACCEL_3G_SEN;
 fp32 BMI088_GYRO_SEN = BMI088_GYRO_2000_SEN;
 
 
-
 #if defined(BMI088_USE_SPI)
 
 #define BMI088_accel_write_single_reg(reg, data) \
@@ -24,7 +23,6 @@ fp32 BMI088_GYRO_SEN = BMI088_GYRO_2000_SEN;
         (data) = BMI088_read_write_byte(0x55);  \
         BMI088_ACCEL_NS_H();                    \
     }
-//#define BMI088_accel_write_muli_reg( reg,  data, len) { BMI088_ACCEL_NS_L(); BMI088_write_muli_reg(reg, data, len); BMI088_ACCEL_NS_H(); }
 #define BMI088_accel_read_muli_reg(reg, data, len) \
     {                                              \
         BMI088_ACCEL_NS_L();                       \
@@ -45,7 +43,6 @@ fp32 BMI088_GYRO_SEN = BMI088_GYRO_2000_SEN;
         BMI088_read_single_reg((reg), &(data)); \
         BMI088_GYRO_NS_H();                     \
     }
-//#define BMI088_gyro_write_muli_reg( reg,  data, len) { BMI088_GYRO_NS_L(); BMI088_write_muli_reg( ( reg ), ( data ), ( len ) ); BMI088_GYRO_NS_H(); }
 #define BMI088_gyro_read_muli_reg(reg, data, len)   \
     {                                               \
         BMI088_GYRO_NS_L();                         \
@@ -55,7 +52,6 @@ fp32 BMI088_GYRO_SEN = BMI088_GYRO_2000_SEN;
 
 static void BMI088_write_single_reg(uint8_t reg, uint8_t data);
 static void BMI088_read_single_reg(uint8_t reg, uint8_t *return_data);
-//static void BMI088_write_muli_reg(uint8_t reg, uint8_t* buf, uint8_t len );
 static void BMI088_read_muli_reg(uint8_t reg, uint8_t *buf, uint8_t len);
 
 #elif defined(BMI088_USE_IIC)
@@ -88,11 +84,9 @@ static uint8_t write_BMI088_gyro_reg_data_error[BMI088_WRITE_GYRO_REG_NUM][3] =
 uint8_t BMI088_init(void)
 {
     uint8_t error = BMI088_NO_ERROR;
-    // GPIO and SPI  Init .
     BMI088_GPIO_init();
     BMI088_com_init();
 
-    // self test pass and init
     if (bmi088_accel_self_test() != BMI088_NO_ERROR)
     {
         error |= BMI088_SELF_TEST_ACCEL_ERROR;
@@ -119,29 +113,26 @@ bool_t bmi088_accel_init(void)
     volatile uint8_t res = 0;
     uint8_t write_reg_num = 0;
 
-    //check commiunication
     BMI088_accel_read_single_reg(BMI088_ACC_CHIP_ID, res);
     BMI088_delay_us(BMI088_COM_WAIT_SENSOR_TIME);
     BMI088_accel_read_single_reg(BMI088_ACC_CHIP_ID, res);
     BMI088_delay_us(BMI088_COM_WAIT_SENSOR_TIME);
 
-    //accel software reset
+    // 软件复位加速度计
     BMI088_accel_write_single_reg(BMI088_ACC_SOFTRESET, BMI088_ACC_SOFTRESET_VALUE);
     BMI088_delay_ms(BMI088_LONG_DELAY_TIME);
 
-    //check commiunication is normal after reset
     BMI088_accel_read_single_reg(BMI088_ACC_CHIP_ID, res);
     BMI088_delay_us(BMI088_COM_WAIT_SENSOR_TIME);
     BMI088_accel_read_single_reg(BMI088_ACC_CHIP_ID, res);
     BMI088_delay_us(BMI088_COM_WAIT_SENSOR_TIME);
 
-    // check the "who am I"
     if (res != BMI088_ACC_CHIP_ID_VALUE)
     {
         return BMI088_NO_SENSOR;
     }
 
-    //set accel sonsor config and check
+    // 写入加速度计配置并读回校验
     for (write_reg_num = 0; write_reg_num < BMI088_WRITE_ACCEL_REG_NUM; write_reg_num++)
     {
 
@@ -164,28 +155,25 @@ bool_t bmi088_gyro_init(void)
     uint8_t write_reg_num = 0;
     uint8_t res = 0;
 
-    //check commiunication
     BMI088_gyro_read_single_reg(BMI088_GYRO_CHIP_ID, res);
     BMI088_delay_us(BMI088_COM_WAIT_SENSOR_TIME);
     BMI088_gyro_read_single_reg(BMI088_GYRO_CHIP_ID, res);
     BMI088_delay_us(BMI088_COM_WAIT_SENSOR_TIME);
 
-    //reset the gyro sensor
+    // 软件复位陀螺仪
     BMI088_gyro_write_single_reg(BMI088_GYRO_SOFTRESET, BMI088_GYRO_SOFTRESET_VALUE);
     BMI088_delay_ms(BMI088_LONG_DELAY_TIME);
-    //check commiunication is normal after reset
     BMI088_gyro_read_single_reg(BMI088_GYRO_CHIP_ID, res);
     BMI088_delay_us(BMI088_COM_WAIT_SENSOR_TIME);
     BMI088_gyro_read_single_reg(BMI088_GYRO_CHIP_ID, res);
     BMI088_delay_us(BMI088_COM_WAIT_SENSOR_TIME);
 
-    // check the "who am I"
     if (res != BMI088_GYRO_CHIP_ID_VALUE)
     {
         return BMI088_NO_SENSOR;
     }
 
-    //set gyro sonsor config and check
+    // 写入陀螺仪配置并读回校验
     for (write_reg_num = 0; write_reg_num < BMI088_WRITE_GYRO_REG_NUM; write_reg_num++)
     {
 
@@ -225,17 +213,15 @@ bool_t bmi088_accel_self_test(void)
 
         };
 
-    //check commiunication is normal
     BMI088_accel_read_single_reg(BMI088_ACC_CHIP_ID, res);
     BMI088_delay_us(BMI088_COM_WAIT_SENSOR_TIME);
     BMI088_accel_read_single_reg(BMI088_ACC_CHIP_ID, res);
     BMI088_delay_us(BMI088_COM_WAIT_SENSOR_TIME);
 
-    // reset  bmi088 accel sensor and wait for > 50ms
+    // 复位加速度计后等待至少 50 ms
     BMI088_accel_write_single_reg(BMI088_ACC_SOFTRESET, BMI088_ACC_SOFTRESET_VALUE);
     BMI088_delay_ms(BMI088_LONG_DELAY_TIME);
 
-    //check commiunication is normal
     BMI088_accel_read_single_reg(BMI088_ACC_CHIP_ID, res);
     BMI088_delay_us(BMI088_COM_WAIT_SENSOR_TIME);
     BMI088_accel_read_single_reg(BMI088_ACC_CHIP_ID, res);
@@ -246,7 +232,7 @@ bool_t bmi088_accel_self_test(void)
         return BMI088_NO_SENSOR;
     }
 
-    // set the accel register
+    // 写入加速度计自检配置
     for (write_reg_num = 0; write_reg_num < 4; write_reg_num++)
     {
 
@@ -260,11 +246,11 @@ bool_t bmi088_accel_self_test(void)
         {
             return write_BMI088_ACCEL_self_test_Reg_Data_Error[write_reg_num][2];
         }
-        // accel conf and accel range  . the two register set need wait for > 50ms
+        // 更改自检配置后等待至少 50 ms
         BMI088_delay_ms(BMI088_LONG_DELAY_TIME);
     }
 
-    // self test include postive and negative
+    // 分别施加正、负自检激励
     for (write_reg_num = 0; write_reg_num < 2; write_reg_num++)
     {
 
@@ -278,10 +264,9 @@ bool_t bmi088_accel_self_test(void)
         {
             return write_BMI088_ACCEL_self_test_Reg_Data_Error[write_reg_num + 4][2];
         }
-        // accel conf and accel range  . the two register set need wait for > 50ms
+        // 更改自检配置后等待至少 50 ms
         BMI088_delay_ms(BMI088_LONG_DELAY_TIME);
 
-        // read response accel
         BMI088_accel_read_muli_reg(BMI088_ACCEL_XOUT_L, buf, 6);
 
         self_test_accel[write_reg_num][0] = (int16_t)((buf[1]) << 8) | buf[0];
@@ -289,7 +274,7 @@ bool_t bmi088_accel_self_test(void)
         self_test_accel[write_reg_num][2] = (int16_t)((buf[5]) << 8) | buf[4];
     }
 
-    //set self test off
+    // 关闭自检激励
     BMI088_accel_write_single_reg(BMI088_ACC_SELF_TEST, BMI088_ACC_SELF_TEST_OFF);
     BMI088_delay_us(BMI088_COM_WAIT_SENSOR_TIME);
     BMI088_accel_read_single_reg(BMI088_ACC_SELF_TEST, res);
@@ -300,7 +285,7 @@ bool_t bmi088_accel_self_test(void)
         return BMI088_ACC_SELF_TEST_ERROR;
     }
 
-    //reset the accel sensor
+    // 复位加速度计
     BMI088_accel_write_single_reg(BMI088_ACC_SOFTRESET, BMI088_ACC_SOFTRESET_VALUE);
     BMI088_delay_ms(BMI088_LONG_DELAY_TIME);
 
@@ -320,15 +305,13 @@ bool_t bmi088_gyro_self_test(void)
 {
     uint8_t res = 0;
     uint8_t retry = 0;
-    //check commiunication is normal
     BMI088_gyro_read_single_reg(BMI088_GYRO_CHIP_ID, res);
     BMI088_delay_us(BMI088_COM_WAIT_SENSOR_TIME);
     BMI088_gyro_read_single_reg(BMI088_GYRO_CHIP_ID, res);
     BMI088_delay_us(BMI088_COM_WAIT_SENSOR_TIME);
-    //reset the gyro sensor
+    // 软件复位陀螺仪
     BMI088_gyro_write_single_reg(BMI088_GYRO_SOFTRESET, BMI088_GYRO_SOFTRESET_VALUE);
     BMI088_delay_ms(BMI088_LONG_DELAY_TIME);
-    //check commiunication is normal after reset
     BMI088_gyro_read_single_reg(BMI088_GYRO_CHIP_ID, res);
     BMI088_delay_us(BMI088_COM_WAIT_SENSOR_TIME);
     BMI088_gyro_read_single_reg(BMI088_GYRO_CHIP_ID, res);
@@ -376,9 +359,6 @@ void BMI088_read_accel_who_am_i(void)
     BMI088_accel_read_single_reg(BMI088_ACC_CHIP_ID, buf);
     last_accel_who_am_i = buf;
 }
-
-
-
 
 
 void BMI088_temperature_read_over(uint8_t *rx_buf, fp32 *temperate)
@@ -519,31 +499,38 @@ void get_BMI088_accel(fp32 accel[3])
 
 #if defined(BMI088_USE_SPI)
 
+/**
+  * @brief          在已选中的 BMI088 器件上写一个寄存器
+  * @param[in]      reg: 寄存器地址
+  * @param[in]      data: 待写值
+  * @retval         无
+  */
 static void BMI088_write_single_reg(uint8_t reg, uint8_t data)
 {
     BMI088_read_write_byte(reg);
     BMI088_read_write_byte(data);
 }
 
+/**
+  * @brief          在已选中的 BMI088 器件上读一个寄存器
+  * @param[in]      reg: 寄存器地址
+  * @param[out]     return_data: 寄存器值
+  * @retval         无
+  */
 static void BMI088_read_single_reg(uint8_t reg, uint8_t *return_data)
 {
     BMI088_read_write_byte(reg | 0x80);
     *return_data = BMI088_read_write_byte(0x55);
 }
 
-//static void BMI088_write_muli_reg(uint8_t reg, uint8_t* buf, uint8_t len )
-//{
-//    BMI088_read_write_byte( reg );
-//    while( len != 0 )
-//    {
 
-//        BMI088_read_write_byte( *buf );
-//        buf ++;
-//        len --;
-//    }
-
-//}
-
+/**
+  * @brief          在已选中的 BMI088 器件上连续读取寄存器
+  * @param[in]      reg: 起始寄存器地址
+  * @param[out]     buf: 接收缓冲区
+  * @param[in]      len: 读取字节数
+  * @retval         无
+  */
 static void BMI088_read_muli_reg(uint8_t reg, uint8_t *buf, uint8_t len)
 {
     BMI088_read_write_byte(reg | 0x80);

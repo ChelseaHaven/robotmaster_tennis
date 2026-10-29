@@ -2,9 +2,7 @@
   ****************************(C) COPYRIGHT 2016 DJI****************************
   * @file       IST8310.c/h
   * @brief      IST8310磁力计驱动函数，包括初始化函数，处理数据函数，通信读取函数
-  *             本工程是将MPU6500 IIC_SLV0设置为自动读取IST8310数据，读取
-  *             MPU_EXT_SENS_DATA_00保存了IST8310的Status，通过判断标志位，来更新
-  *             数据。
+  *             通过 C 板 I2C3 读取磁场数据。
   * @note       IST8310只支持IIC读取
   * @history
   *  Version    Date            Author          Modification
@@ -56,7 +54,7 @@ uint8_t ist8310_init(void)
         return IST8310_NO_SENSOR;
     }
     ist8310_delay_ms(wait_time);
-    //set mpu6500 sonsor config and check
+    // 写入磁力计配置并读回校验
     for (writeNum = 0; writeNum < IST8310_WRITE_REG_NUM; writeNum++)
     {
         ist8310_IIC_write_single_reg(ist8310_write_reg_data_error[writeNum][0], ist8310_write_reg_data_error[writeNum][1]);

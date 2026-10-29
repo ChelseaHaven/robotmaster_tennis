@@ -13,7 +13,21 @@ typedef struct
     int16_t last_ecd;
 } motor_measure_t;
 
-// 四个参数为直接发送给电调的电流指令。
+/**
+  * @brief          通过 CAN1 的 0x200 报文发送四路电调电流指令
+  * @param[in]      motor1: 1 号电调电流指令
+  * @param[in]      motor2: 2 号电调电流指令
+  * @param[in]      motor3: 3 号电调电流指令
+  * @param[in]      motor4: 4 号电调电流指令
+  * @note           C620 的 ±16384 对应 ±20 A；本函数不再限幅。
+  * @retval         无
+  */
 void CAN_cmd_chassis(int16_t motor1, int16_t motor2, int16_t motor3, int16_t motor4);
+
+/**
+  * @brief          获取指定底盘电机的反馈数据
+  * @param[in]      index: 电机索引，0～3 对应 1～4 号
+  * @retval         反馈结构体只读指针；索引越界返回 NULL
+  */
 const motor_measure_t *get_chassis_motor_measure_point(uint8_t index);
 #endif

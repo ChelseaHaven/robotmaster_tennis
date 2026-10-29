@@ -1,8 +1,8 @@
 /**
   **************************(C) COPYRIGHT 2019 DJI****************************
   * @file       test_task.c/h
-  * @brief      buzzer warning task.蜂鸣器报警任务
-  * @note       
+  * @brief      蜂鸣器报警与调试输出任务
+  * @note
   * @history
   *  Version    Date            Author          Modification
   *  V1.0.0     Nov-11-2019     RM              1. done
@@ -42,11 +42,12 @@ static const char *const error_name[ERROR_LIST_LENGHT] = {
 };
 
 
-
-
 /* 以下打印函数仅在本文件使用，按需在任务循环中启用。 */
 
-// 打印 IMU 姿态角，单位为度。
+/**
+  * @brief          打印 IMU 偏航、俯仰和横滚角，单位为度
+  * @retval         无
+  */
 static inline void test_print_imu(void)
 {
     const fp32 *angle = get_INS_angle_point();
@@ -56,7 +57,10 @@ static inline void test_print_imu(void)
            angle[INS_ROLL_ADDRESS_OFFSET] * 57.2957795f);
 }
 
-// 一行打印四轮编码器换算的线速度，单位 m/s。
+/**
+  * @brief          一行打印四轮编码器换算的线速度，单位 m/s
+  * @retval         无
+  */
 static inline void test_print_motor_speed(void)
 {
     int16_t speed_rpm[4];
@@ -73,7 +77,10 @@ static inline void test_print_motor_speed(void)
            speed_rpm[3] * rpm_to_mps);
 }
 
-// 遥控器有效时，一行打印所有 SBUS 原始通道。
+/**
+  * @brief          遥控器有效时一行打印全部 SBUS 原始通道
+  * @retval         无
+  */
 static inline void test_print_remote(void)
 {
     RC_ctrl_t remote;
@@ -93,7 +100,10 @@ static inline void test_print_remote(void)
            (unsigned)remote.digital[0], (unsigned)remote.digital[1]);
 }
 
-// 打印 3566 下发的有效目标速度，单位 m/s、m/s、rad/s。
+/**
+  * @brief          打印有效的上位机目标速度，单位 m/s、m/s、rad/s
+  * @retval         无
+  */
 static inline void test_print_host_velocity(void)
 {
     host_velocity_t velocity;
@@ -102,7 +112,10 @@ static inline void test_print_host_velocity(void)
            velocity.vx, velocity.vy, velocity.wz);
 }
 
-// 打印电池电压和大疆公式估算的电量百分比。
+/**
+  * @brief          打印电池电压和估算电量百分比
+  * @retval         无
+  */
 static inline void test_print_battery(void)
 {
     printf("battery: %.2f V, %u%%\r\n",
@@ -110,7 +123,10 @@ static inline void test_print_battery(void)
            (unsigned)get_battery_percentage());
 }
 
-// 打印当前启用设备的错误；无错误时保持静默。
+/**
+  * @brief          打印当前启用设备的错误，无错误时保持静默
+  * @retval         无
+  */
 static inline void test_print_errors(void)
 {
     const error_t *error_list = get_error_list_point();
@@ -125,70 +141,9 @@ static inline void test_print_errors(void)
 }
 
 /**
-  * @brief          test任务
-  * @param[in]      pvParameters: NULL
-  * @retval         none
-  */
-void test_task(void const * argument)
-{
-    static uint8_t error;
-    static uint8_t error_num;
-    uint32_t last_print_tick = 0;
-    uint8_t battery_alarm_active = 0;
-    error_list_test_local = get_error_list_point();
-    buzzer_play_startup_melody();
-
-    while(1)
-    {
-        // 大疆 voltage_task 的估算电量低于 20% 时，沿用已有蜂鸣报警。
-        if (battery_voltage > 1.0f && get_battery_percentage() < 20U) {
-            buzzer_warn_error(1);
-            battery_alarm_active = 1;
-        } else if (battery_alarm_active) {
-            buzzer_off();
-            battery_alarm_active = 0;
-        }
-        error = 0;
-
-        //发现错误
-        for(error_num = 0; error_num < ERROR_LIST_LENGHT; error_num++)
-        {
-            if(error_list_test_local[error_num].enable && error_list_test_local[error_num].error_exist)
-            {
-                error = 1;
-                break;
-            }
-        }
-
-        //有错误
-        if(error)
-        {
-            // buzzer_warn_error(error_num+1);
-        }
-        
-        if (xTaskGetTickCount() - last_print_tick >= pdMS_TO_TICKS(100))
-        {
-            last_print_tick = xTaskGetTickCount();
-
-
-            // 按需取消注释，每组打印保持在 100 ms 周期内。
-            // test_print_imu();
-            test_print_motor_speed();
-            // test_print_remote();
-            // test_print_host_velocity();
-            // test_print_battery();
-            // test_print_errors();
-        }
-        osDelay(10);
-    }
-}
-
-
-
-/**
-  * @brief          使得蜂鸣器响
-  * @param[in]      num:响声次数
-  * @retval         none
+  * @brief          按错误编号输出对应次数的周期蜂鸣提示
+  * @param[in]      num: 每组提示的蜂鸣次数
+  * @retval         无
   */
 static void buzzer_warn_error(uint8_t num)
 {
@@ -224,5 +179,59 @@ static void buzzer_warn_error(uint8_t num)
     }
 }
 
+/**
+  * @brief          播放开机旋律，周期检查报警并执行选中的串口打印
+  * @param[in]      argument: 任务参数，未使用
+  * @retval         无
+  */
+void test_task(void const * argument)
+{
+    static uint8_t error;
+    static uint8_t error_num;
+    uint32_t last_print_tick = 0;
+    uint8_t battery_alarm_active = 0;
+    error_list_test_local = get_error_list_point();
+    buzzer_play_startup_melody();
 
-	
+    while(1)
+    {
+        // 大疆 voltage_task 的估算电量低于 20% 时，沿用已有蜂鸣报警。
+        if (battery_voltage > 1.0f && get_battery_percentage() < 20U) {
+            buzzer_warn_error(1);
+            battery_alarm_active = 1;
+        } else if (battery_alarm_active) {
+            buzzer_off();
+            battery_alarm_active = 0;
+        }
+        error = 0;
+
+        for(error_num = 0; error_num < ERROR_LIST_LENGHT; error_num++)
+        {
+            if(error_list_test_local[error_num].enable && error_list_test_local[error_num].error_exist)
+            {
+                error = 1;
+                break;
+            }
+        }
+
+        if(error)
+        {
+            // buzzer_warn_error(error_num+1);
+        }
+
+        if (xTaskGetTickCount() - last_print_tick >= pdMS_TO_TICKS(100))
+        {
+            last_print_tick = xTaskGetTickCount();
+
+
+            // 按需取消注释，每组打印保持在 100 ms 周期内。
+            // test_print_imu();
+            test_print_motor_speed();
+            // test_print_remote();
+            // test_print_host_velocity();
+            // test_print_battery();
+            // test_print_errors();
+        }
+        osDelay(10);
+    }
+}

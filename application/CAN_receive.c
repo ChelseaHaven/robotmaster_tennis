@@ -5,6 +5,11 @@
 extern CAN_HandleTypeDef hcan1;
 static motor_measure_t motor_chassis[4];
 
+/**
+  * @brief          接收并解析 CAN1 四个底盘电调的反馈
+  * @param[in]      hcan: CAN 句柄，仅处理 CAN1
+  * @retval         无
+  */
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
     CAN_RxHeaderTypeDef header;

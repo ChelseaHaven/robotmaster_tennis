@@ -17,6 +17,10 @@ static rc_receive_error_callback_t error_callback;
 #define RC_DMA_ERROR_FLAGS (DMA_LISR_TEIF1 | DMA_LISR_DMEIF1 | DMA_LISR_FEIF1)
 #define RC_UART_ERROR_FLAGS (USART_SR_PE | USART_SR_FE | USART_SR_NE | USART_SR_ORE)
 
+/**
+  * @brief          关闭遥控器接收 DMA 请求及相关中断
+  * @retval         无
+  */
 static void stop_receive(void)
 {
     CLEAR_BIT(huart3.Instance->CR3, USART_CR3_DMAR | USART_CR3_EIE);
@@ -28,6 +32,11 @@ static void stop_receive(void)
     running = 0;
 }
 
+/**
+  * @brief          停止接收并记录待恢复状态，通知上层错误回调
+  * @param[in]      reason: 接收错误位掩码
+  * @retval         无
+  */
 static void receive_error(uint32_t reason)
 {
     stop_receive();
@@ -85,6 +94,10 @@ uint8_t RC_restart_is_needed(void)
     return restart_needed;
 }
 
+/**
+  * @brief          读取遥控器 DMA 新增数据并调用接收回调，异常时请求重启
+  * @retval         无
+  */
 static void drain_receive(void)
 {
     uint32_t uart_status = huart3.Instance->SR;

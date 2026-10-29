@@ -7,6 +7,13 @@ extern ADC_HandleTypeDef hadc1;
 extern ADC_HandleTypeDef hadc3;
 
 volatile fp32 voltage_vrefint_proportion = 8.0586080586080586080586080586081e-4f;
+
+/**
+  * @brief          配置并阻塞采集指定 ADC 通道一次
+  * @param[in,out]  ADCx: ADC 句柄
+  * @param[in]      ch: ADC 通道号
+  * @retval         本次 ADC 转换值
+  */
 static uint16_t adcx_get_chx_value(ADC_HandleTypeDef *ADCx, uint32_t ch)
 {
     static ADC_ChannelConfTypeDef sConfig = {0};
