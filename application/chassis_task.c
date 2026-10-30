@@ -14,8 +14,8 @@
 
 #define WHEEL_DIAMETER_MM 127.0f       // 轮子直径，单位 mm
 #define MOTOR_GEAR_RATIO 19.2f         // 电机转速与轮子转速之比
-#define WHEELBASE_MM 208.0f            // 前后轮中心距，单位 mm
-#define TRACK_WIDTH_MM 259.6f          // 左右轮中心距，单位 mm
+#define WHEELBASE_MM 320.0f            // 前后轮中心距，单位 mm
+#define TRACK_WIDTH_MM 354.6f          // 左右轮中心距，单位 mm
 
 #define RPM_TO_MPS (3.14159265358979323846f * (WHEEL_DIAMETER_MM / 1000.0f) / (60.0f * MOTOR_GEAR_RATIO))
 #define MOTOR_DISTANCE_TO_CENTER ((WHEELBASE_MM + TRACK_WIDTH_MM) / (2.0f * 1000.0f))

@@ -4,7 +4,7 @@
 
 #define HOST_CMD_CHASSIS_VELOCITY 0x0101U
 #define HOST_VELOCITY_PAYLOAD_SIZE 12U
-// 按传输方向区分：下行三轴目标速度 12 字节，上行四轮反馈速度 16 字节。
+// 按传输方向区分：下行三轴目标速度 12 字节，上行四轮轮端角速度 16 字节，单位 rad/s。
 #define HOST_CMD_WHEEL_SPEED 0x0101U
 #define HOST_CMD_IMU_RAW 0x0102U
 #define HOST_IMU_RAW_PAYLOAD_SIZE 36U

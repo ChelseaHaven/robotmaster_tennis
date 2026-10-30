@@ -24,8 +24,8 @@
 #define CHASSIS_RC_CENTER 992U
 #define CHASSIS_RC_MAX 1792U
 #define CHASSIS_RC_DEADBAND 30U
-#define CHASSIS_MAX_LINEAR_SPEED 1.0f  // 遥控/上位机的平移合速度上限，m/s
-#define CHASSIS_MAX_YAW_SPEED 2.0f     // 角速度上限，rad/s
+#define CHASSIS_MAX_LINEAR_SPEED 3.0f  // 遥控/上位机的平移合速度上限，m/s
+#define CHASSIS_MAX_YAW_SPEED 4.0f     // 角速度上限，rad/s
 
 typedef enum {
     CHASSIS_ESTOP_MODE = 0,

@@ -45,16 +45,17 @@ static const char *const error_name[ERROR_LIST_LENGHT] = {
 /* 以下打印函数仅在本文件使用，按需在任务循环中启用。 */
 
 /**
-  * @brief          打印 IMU 偏航、俯仰和横滚角，单位为度
+  * @brief          按上发顺序打印原始 gyro（rad/s）、acc（m/s²）、mag（μT）
   * @retval         无
   */
 static inline void test_print_imu(void)
 {
-    const fp32 *angle = get_INS_angle_point();
-    printf("yaw:%.4f, pitch:%.4f, roll:%.4f\r\n",
-           angle[INS_YAW_ADDRESS_OFFSET] * 57.2957795f,
-           angle[INS_PITCH_ADDRESS_OFFSET] * 57.2957795f,
-           angle[INS_ROLL_ADDRESS_OFFSET] * 57.2957795f);
+    INS_raw_data_t raw;
+    if (!get_INS_raw_data_snapshot(&raw)) return;
+    printf("%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f\r\n",
+           raw.gyro[0], raw.gyro[1], raw.gyro[2],
+           raw.accel[0], raw.accel[1], raw.accel[2],
+           raw.mag[0], raw.mag[1], raw.mag[2]);
 }
 
 /**
@@ -196,13 +197,13 @@ void test_task(void const * argument)
     while(1)
     {
         // 大疆 voltage_task 的估算电量低于 20% 时，沿用已有蜂鸣报警。
-        if (battery_voltage > 1.0f && get_battery_percentage() < 20U) {
-            buzzer_warn_error(1);
-            battery_alarm_active = 1;
-        } else if (battery_alarm_active) {
-            buzzer_off();
-            battery_alarm_active = 0;
-        }
+        // if (battery_voltage > 1.0f && get_battery_percentage() < 20U) {
+        //     buzzer_warn_error(1);
+        //     battery_alarm_active = 1;
+        // } else if (battery_alarm_active) {
+        //     buzzer_off();
+        //     battery_alarm_active = 0;
+        // }
         error = 0;
 
         for(error_num = 0; error_num < ERROR_LIST_LENGHT; error_num++)
@@ -225,8 +226,8 @@ void test_task(void const * argument)
 
 
             // 按需取消注释，每组打印保持在 100 ms 周期内。
-            // test_print_imu();
-            test_print_motor_speed();
+            test_print_imu();
+            // test_print_motor_speed();
             // test_print_remote();
             // test_print_host_velocity();
             // test_print_battery();

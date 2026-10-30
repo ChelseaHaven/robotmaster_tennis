@@ -56,7 +56,7 @@ uint8_t host_comm_send(uint16_t command, const void *payload, uint16_t length);
 uint8_t host_comm_receive(host_packet_t *packet);
 
 /**
-  * @brief          按各自周期将轮速和 IMU 原始数据加入发送队列
+  * @brief          按各自周期将四轮轮端角速度（rad/s）和 IMU 原始数据加入发送队列
   * @param[in]      now_ms: 当前主控时间，单位 ms
   * @note           由通信任务调用，当前两类数据均按 10 ms 周期上发。
   * @retval         无
