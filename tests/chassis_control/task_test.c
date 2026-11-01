@@ -41,7 +41,7 @@ void osDelay(uint32_t period)
         remote.ch[3]=992;remote.ch[0]=192;break;
     case 4:
         for(unsigned i=0;i<4;i++) assert(currents[i]<0);
-        remote.ch[7]=192;break;
+        remote.ch[6]=192;break;
     case 5:
         assert(state.mode==CHASSIS_HOST_MODE && state.host_waiting);stopped();host.frame_count++;break;
     case 6:
@@ -56,7 +56,24 @@ void osDelay(uint32_t period)
     case 10:
         assert(!state.host_waiting && state.vx==.3f);remote.ch[7]=1792;break;
     case 11:
-        assert(state.mode==CHASSIS_ESTOP_MODE);stopped();longjmp(done,1);
+        assert(state.mode==CHASSIS_ESTOP_MODE);stopped();
+        remote.ch[7]=992;remote.ch[6]=1792;remote.ch[2]=992;remote.ch[3]=992;remote.ch[0]=992;
+        remote.ch[5]=1792;
+        for(unsigned i=0;i<4;i++) motors[i].raw_speed_rpm=100;
+        break;
+    case 12:
+        assert(state.stop_mode==CHASSIS_STOP_SPEED_HOLD);
+        for(unsigned i=0;i<4;i++) assert(currents[i]<0);
+        remote.ch[5]=192;break;
+    case 13:
+        assert(state.stop_mode==CHASSIS_STOP_ZERO_CURRENT);stopped();
+        remote.ch[2]=1792;break;
+    case 14:
+        assert(currents[0]<0 && currents[1]>0 && currents[2]>0 && currents[3]<0);
+        remote.ch[2]=992;remote.ch[5]=1792;remote.valid=0;break;
+    case 15:
+        assert(state.mode==CHASSIS_ESTOP_MODE && state.stop_mode==CHASSIS_STOP_ZERO_CURRENT);
+        stopped();longjmp(done,1);
     default:assert(0);
     }
 }
@@ -64,6 +81,7 @@ int main(void)
 {
     remote.valid=1;
     for(unsigned i=0;i<16;i++) remote.ch[i]=992;
+    remote.ch[4]=1792;remote.ch[5]=192;remote.ch[6]=1792;
     remote.ch[7]=1792;
     host=(host_velocity_t){.valid=1,.frame_count=7,.vx=.3f};
     if (!setjmp(done)) chassis_task(NULL);

@@ -26,6 +26,8 @@
 #include "remote_control.h"
 #include "host_comm_task.h"
 #include "voltage_task.h"
+#include "calibrate_task.h"
+
 
 static void buzzer_warn_error(uint8_t num);
 
@@ -143,13 +145,20 @@ static inline void test_print_errors(void)
 
 /**
   * @brief          按错误编号输出对应次数的周期蜂鸣提示
-  * @param[in]      num: 每组提示的蜂鸣次数
+  * @param[in]      num: 每组提示的蜂鸣次数；0 表示关闭并复位提示计数
   * @retval         无
   */
 static void buzzer_warn_error(uint8_t num)
 {
     static uint8_t show_num = 0;
     static uint8_t stop_num = 100;
+    static uint8_t tick = 0;
+    if (num == 0U) {
+        show_num = tick = 0;
+        stop_num = 100;
+        buzzer_off();
+        return;
+    }
     if(show_num == 0 && stop_num == 0)
     {
         show_num = num;
@@ -162,7 +171,6 @@ static void buzzer_warn_error(uint8_t num)
     }
     else
     {
-        static uint8_t tick = 0;
         tick++;
         if(tick < 50)
         {
@@ -190,20 +198,25 @@ void test_task(void const * argument)
     static uint8_t error;
     static uint8_t error_num;
     uint32_t last_print_tick = 0;
-    uint8_t battery_alarm_active = 0;
+    enum { BUZZER_IDLE, BUZZER_BATTERY, BUZZER_CALIBRATION };
+    uint8_t buzzer_mode = BUZZER_IDLE;
     error_list_test_local = get_error_list_point();
     buzzer_play_startup_melody();
 
     while(1)
     {
-        // 大疆 voltage_task 的估算电量低于 20% 时，沿用已有蜂鸣报警。
-        // if (battery_voltage > 1.0f && get_battery_percentage() < 20U) {
-        //     buzzer_warn_error(1);
-        //     battery_alarm_active = 1;
-        // } else if (battery_alarm_active) {
-        //     buzzer_off();
-        //     battery_alarm_active = 0;
-        // }
+        // 统一控制蜂鸣器：确认后的低电量报警优先于标定提示。
+        uint8_t next_buzzer_mode = battery_low_alarm_is_active() ? BUZZER_BATTERY :
+                                  gyro_calibration_is_busy() ? BUZZER_CALIBRATION : BUZZER_IDLE;
+        if (next_buzzer_mode != buzzer_mode) {
+            buzzer_warn_error(0);
+            buzzer_mode = next_buzzer_mode;
+        }
+        if (buzzer_mode == BUZZER_BATTERY) {
+            buzzer_warn_error(1);
+        } else if (buzzer_mode == BUZZER_CALIBRATION) {
+            buzzer_on(1000, 30);
+        }
         error = 0;
 
         for(error_num = 0; error_num < ERROR_LIST_LENGHT; error_num++)
@@ -226,11 +239,11 @@ void test_task(void const * argument)
 
 
             // 按需取消注释，每组打印保持在 100 ms 周期内。
-            test_print_imu();
+            // test_print_imu();
             // test_print_motor_speed();
             // test_print_remote();
             // test_print_host_velocity();
-            // test_print_battery();
+            test_print_battery();
             // test_print_errors();
         }
         osDelay(10);

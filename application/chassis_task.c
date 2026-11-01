@@ -9,7 +9,7 @@
 #include <math.h>
 
 #define CHASSIS_PERIOD_MS 2U
-#define MAX_WHEEL_SPEED 4.0f
+#define MAX_WHEEL_SPEED 3.21f
 #define MOTOR_CURRENT_LIMIT (16384.0f * 15.0f / 20.0f) // C620：15 A 对应指令 12288
 
 #define WHEEL_DIAMETER_MM 127.0f       // 轮子直径，单位 mm
@@ -41,6 +41,7 @@ void chassis_task(void const *argument)
 
     chassis_behaviour_t behaviour = {0};
     chassis_mode_t previous_mode = CHASSIS_ESTOP_MODE;
+    chassis_stop_mode_t previous_stop_mode = CHASSIS_STOP_ZERO_CURRENT;
     for (;;)
     {
         RC_ctrl_t remote;
@@ -53,12 +54,14 @@ void chassis_task(void const *argument)
         __disable_irq();
         control_state = control;
         __set_PRIMASK(mask);
-        if (control.mode != previous_mode) {
+        if (control.mode != previous_mode || control.stop_mode != previous_stop_mode) {
             for (unsigned i = 0; i < 4; ++i) PID_clear(&speed_pid[i]);
             previous_mode = control.mode;
+            previous_stop_mode = control.stop_mode;
         }
         fp32 vx = control.vx, vy = control.vy, wz = control.wz;
-        if (vx == 0.0f && vy == 0.0f && wz == 0.0f)
+        if (vx == 0.0f && vy == 0.0f && wz == 0.0f &&
+            control.stop_mode == CHASSIS_STOP_ZERO_CURRENT)
         {
             for (unsigned i = 0; i < 4; ++i) PID_clear(&speed_pid[i]);
             CAN_cmd_chassis(0, 0, 0, 0);

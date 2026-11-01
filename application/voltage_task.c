@@ -13,10 +13,56 @@
 
 #define VOLTAGE_DROP            0.00f
 
+#define BATTERY_PRESENT_MIN_VOLTAGE 10.0f
+#define BATTERY_ALARM_PERCENT 5U
+#define BATTERY_RECOVER_PERCENT 8U
+#define BATTERY_SAMPLE_PERIOD_MS 100U
+#define BATTERY_LOW_CONFIRM_SAMPLES 30U
+#define BATTERY_RECOVER_CONFIRM_SAMPLES 10U
+
 static fp32 calc_battery_percentage(float voltage);
 
 fp32 battery_voltage;
 fp32 electricity_percentage;
+static volatile uint8_t battery_alarm_active;
+
+/**
+  * @brief          按连续电压采样更新低电量报警，避免瞬时波动反复触发
+  * @param[in]      voltage: 当前电池电压，单位 V
+  * @param[in]      percentage: 当前估算电量百分比
+  * @retval         无
+  */
+static void update_battery_alarm(fp32 voltage, uint16_t percentage)
+{
+    static uint8_t low_samples;
+    static uint8_t recover_samples;
+    if (!(voltage > BATTERY_PRESENT_MIN_VOLTAGE)) {
+        battery_alarm_active = 0;
+        low_samples = recover_samples = 0;
+        return;
+    }
+    if (!battery_alarm_active) {
+        recover_samples = 0;
+        if (percentage < BATTERY_ALARM_PERCENT) {
+            if (++low_samples >= BATTERY_LOW_CONFIRM_SAMPLES) {
+                battery_alarm_active = 1;
+                low_samples = 0;
+            }
+        } else {
+            low_samples = 0;
+        }
+    } else {
+        low_samples = 0;
+        if (percentage >= BATTERY_RECOVER_PERCENT) {
+            if (++recover_samples >= BATTERY_RECOVER_CONFIRM_SAMPLES) {
+                battery_alarm_active = 0;
+                recover_samples = 0;
+            }
+        } else {
+            recover_samples = 0;
+        }
+    }
+}
 
 /**
   * @brief          按大疆分段多项式计算电池剩余电量比例
@@ -62,6 +108,11 @@ uint16_t get_battery_percentage(void)
     return (uint16_t)(electricity_percentage * 100.0f);
 }
 
+uint8_t battery_low_alarm_is_active(void)
+{
+    return battery_alarm_active;
+}
+
 void battery_voltage_task(void const * argument)
 {
     osDelay(1000);
@@ -71,6 +122,7 @@ void battery_voltage_task(void const * argument)
     {
         battery_voltage = get_battery_voltage() + VOLTAGE_DROP;
         electricity_percentage = calc_battery_percentage(battery_voltage);
-        osDelay(100);
+        update_battery_alarm(battery_voltage, get_battery_percentage());
+        osDelay(BATTERY_SAMPLE_PERIOD_MS);
     }
 }
