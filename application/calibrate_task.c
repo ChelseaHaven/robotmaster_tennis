@@ -19,6 +19,7 @@ typedef struct
 static gyro_cali_store_t gyro_cali;
 static volatile uint8_t calibration_requested;
 static volatile uint8_t calibration_running;
+static uint8_t knob_armed;
 
 int8_t get_control_temperature(void)
 {
@@ -27,11 +28,14 @@ int8_t get_control_temperature(void)
 
 void cali_param_init(void)
 {
+    calibration_requested = calibration_running = knob_armed = 0;
     flash_read(GYRO_CALI_FLASH_ADDR, (uint32_t *)&gyro_cali, sizeof(gyro_cali) / 4U);
     if (gyro_cali.magic == GYRO_CALI_MAGIC)
         INS_set_cali_gyro(gyro_cali.scale, gyro_cali.offset);
-    else
-        calibration_requested = 1;
+    else {
+        gyro_cali = (gyro_cali_store_t){.scale = {1.0f, 1.0f, 1.0f}};
+        INS_set_cali_gyro(gyro_cali.scale, gyro_cali.offset);
+    }
 }
 
 void request_gyro_calibration(void)
@@ -40,6 +44,7 @@ void request_gyro_calibration(void)
     __disable_irq();
     if (!calibration_running && !calibration_requested) {
         calibration_requested = 1;
+        knob_armed = 0;
     }
     __set_PRIMASK(mask);
 }
@@ -53,6 +58,21 @@ uint8_t gyro_calibration_is_busy(void)
     return busy;
 }
 
+void calibrate_knob_update(const RC_ctrl_t *remote)
+{
+    uint32_t mask = __get_PRIMASK();
+    __disable_irq();
+    if (!remote || !remote->valid || calibration_requested || calibration_running) {
+        knob_armed = 0;
+    } else if (remote->ch[GYRO_CALI_KNOB_CHANNEL - 1U] <= GYRO_CALI_KNOB_THRESHOLD) {
+        knob_armed = 1;
+    } else {
+        if (knob_armed) calibration_requested = 1;
+        knob_armed = 0;
+    }
+    __set_PRIMASK(mask);
+}
+
 void calibrate_task(void const *argument)
 {
     (void)argument;
@@ -64,6 +84,7 @@ void calibrate_task(void const *argument)
         if (start) {
             calibration_requested = 0;
             calibration_running = 1;
+            knob_armed = 0;
         }
         __set_PRIMASK(mask);
         if (start)
@@ -81,6 +102,7 @@ void calibrate_task(void const *argument)
             mask = __get_PRIMASK();
             __disable_irq();
             calibration_running = 0;
+            knob_armed = 0;
             __set_PRIMASK(mask);
         }
         osDelay(10);

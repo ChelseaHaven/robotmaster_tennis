@@ -58,18 +58,19 @@
 #define INS_RAW_DATA_TIMEOUT_MS 100U
 
 typedef struct {
-    fp32 gyro[3];   // 传感器轴 XYZ，rad/s，未加软件零偏或安装旋转
-    fp32 accel[3];  // 传感器轴 XYZ，m/s²，含重力，未低通或去重力
-    fp32 mag[3];    // 传感器轴 XYZ，uT，未做磁场校准
+    fp32 gyro[3];   // 现有函数补偿后的 XYZ，rad/s，当前安装矩阵为 I
+    fp32 accel[3];  // 现有函数补偿后的 XYZ，m/s²，含重力，未低通
+    fp32 mag[3];    // 现有函数补偿后的 XYZ，μT，与磁场融合开关独立
     uint32_t last_update_ms;
     uint8_t ready;
     uint8_t mag_valid;
 } INS_raw_data_t;
 
 /**
-  * @brief          在任务中复制最新 IMU 原始数据快照
-  * @param[out]     snapshot: 原始角速度、加速度、磁场及有效标志
-  * @note           磁力计无效时 mag_valid 为 0，磁场三轴填零。
+  * @brief          在任务中复制现有 IMU 补偿函数输出的一致快照
+  * @param[out]     snapshot: 补偿后的角速度、加速度、磁场及有效标志
+  * @note           当前安装矩阵为 I；实际执行的标定仅有 gyro 零偏，acc、mag 补偿默认为零。
+  *                 磁力计无效时 mag_valid 为 0，磁场三轴填零。
   * @retval         1：BMI088 数据有效；0：空指针、无数据或数据超时
   */
 uint8_t get_INS_raw_data_snapshot(INS_raw_data_t *snapshot);
@@ -149,8 +150,8 @@ extern const fp32 *get_accel_data_point(void);
 
 
 /**
-  * @brief          获取参与姿态融合的磁场数据
-  * @retval         三轴磁场只读指针，单位 μT，关闭磁力计融合时为零
+  * @brief          获取安装矩阵和零偏补偿后的磁场数据，与融合开关独立
+  * @retval         三轴磁场只读指针，单位 μT，磁力计无效时为零
   */
 extern const fp32 *get_mag_data_point(void);
 

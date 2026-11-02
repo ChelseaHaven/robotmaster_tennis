@@ -38,10 +38,18 @@
 
 #define IMU_temp_PWM(pwm)  imu_pwm_set(pwm)
 
+/* 原安装旋转矩阵，保留供参考。
 #define BMI088_BOARD_INSTALL_SPIN_MATRIX    \
     {0.0f, 1.0f, 0.0f},                     \
     {-1.0f, 0.0f, 0.0f},                     \
-    {0.0f, 0.0f, 1.0f}                      \
+    {0.0f, 0.0f, 1.0f}
+*/
+
+// 单位矩阵 I：保留 BMI088 传感器原始 XYZ 轴向。
+#define BMI088_BOARD_INSTALL_SPIN_MATRIX    \
+    {1.0f, 0.0f, 0.0f},                     \
+    {0.0f, 1.0f, 0.0f},                     \
+    {0.0f, 0.0f, 1.0f}
 
 
 #define IST8310_BOARD_INSTALL_SPIN_MATRIX   \
@@ -118,7 +126,7 @@ static uint8_t raw_mag_valid;
 static uint32_t raw_mag_update_ms;
 
 /**
-  * @brief          发布 IMU 原始物理量的一致快照
+  * @brief          通过现有数据接口发布零偏补偿后的 IMU 一致快照
   * @retval         无
   */
 static void publish_raw_data(void)
@@ -126,11 +134,14 @@ static void publish_raw_data(void)
     uint32_t now = HAL_GetTick();
     uint8_t mag_valid = raw_mag_valid &&
                         (uint32_t)(now - raw_mag_update_ms) < INS_RAW_DATA_TIMEOUT_MS;
+    const fp32 *gyro = get_gyro_data_point();
+    const fp32 *accel = get_accel_data_point();
+    const fp32 *mag = get_mag_data_point();
     taskENTER_CRITICAL();
     for (unsigned i = 0; i < 3; ++i) {
-        raw_data_snapshot.gyro[i] = bmi088_real_data.gyro[i];
-        raw_data_snapshot.accel[i] = bmi088_real_data.accel[i];
-        raw_data_snapshot.mag[i] = mag_valid ? ist8310_real_data.mag[i] : 0.0f;
+        raw_data_snapshot.gyro[i] = gyro[i];
+        raw_data_snapshot.accel[i] = accel[i];
+        raw_data_snapshot.mag[i] = mag_valid ? mag[i] : 0.0f;
     }
     raw_data_snapshot.last_update_ms = now;
     raw_data_snapshot.ready = 1;
@@ -161,7 +172,7 @@ fp32 INS_angle[3] = {0.0f, 0.0f, 0.0f};      // 欧拉角，单位 rad
   * @brief          按安装矩阵旋转 IMU 数据并叠加零偏
   * @param[out]     gyro: 三轴角速度，rad/s
   * @param[out]     accel: 三轴加速度，m/s²
-  * @param[out]     mag: 三轴磁场，μT，关闭磁场融合时填零
+  * @param[out]     mag: 三轴磁场，μT，磁力计无效时填零，与融合开关独立
   * @param[in]      bmi088: 陀螺仪及加速度计数据
   * @param[in]      ist8310: 磁力计数据
   * @retval         无
@@ -172,13 +183,8 @@ static void imu_cali_slove(fp32 gyro[3], fp32 accel[3], fp32 mag[3], bmi088_real
     {
         gyro[i] = bmi088->gyro[0] * gyro_scale_factor[i][0] + bmi088->gyro[1] * gyro_scale_factor[i][1] + bmi088->gyro[2] * gyro_scale_factor[i][2] + gyro_offset[i];
         accel[i] = bmi088->accel[0] * accel_scale_factor[i][0] + bmi088->accel[1] * accel_scale_factor[i][1] + bmi088->accel[2] * accel_scale_factor[i][2] + accel_offset[i];
-#if INS_USE_MAGNETOMETER
         mag[i] = raw_mag_valid ?
                  ist8310->mag[0] * mag_scale_factor[i][0] + ist8310->mag[1] * mag_scale_factor[i][1] + ist8310->mag[2] * mag_scale_factor[i][2] + mag_offset[i] : 0.0f;
-#else
-        (void)ist8310;
-        mag[i] = 0.0f;
-#endif
     }
 }
 
@@ -466,11 +472,13 @@ void INS_task(void const *pvParameters)
         raw_mag_valid = ist8310_read_mag_checked(ist8310_real_data.mag);
         if (raw_mag_valid) raw_mag_update_ms = HAL_GetTick();
     }
-    publish_raw_data();
     imu_cali_slove(INS_gyro, INS_accel, INS_mag, &bmi088_real_data, &ist8310_real_data);
+    publish_raw_data();
 
     PID_init(&imu_temp_pid, PID_POSITION, imu_temp_PID, TEMPERATURE_PID_MAX_OUT, TEMPERATURE_PID_MAX_IOUT);
-    AHRS_init(INS_quat, INS_accel, INS_mag);
+    const fp32 no_mag[3] = {0.0f, 0.0f, 0.0f};
+    const fp32 *fusion_mag = INS_USE_MAGNETOMETER ? INS_mag : no_mag;
+    AHRS_init(INS_quat, INS_accel, fusion_mag);
 
     accel_fliter_1[0] = accel_fliter_2[0] = accel_fliter_3[0] = INS_accel[0];
     accel_fliter_1[1] = accel_fliter_2[1] = accel_fliter_3[1] = INS_accel[1];
@@ -524,9 +532,8 @@ void INS_task(void const *pvParameters)
             if (raw_mag_valid) raw_mag_update_ms = HAL_GetTick();
         }
 #endif
-        publish_raw_data();
-
         imu_cali_slove(INS_gyro, INS_accel, INS_mag, &bmi088_real_data, &ist8310_real_data);
+        publish_raw_data();
 
 
         //加速度计低通滤波
@@ -546,7 +553,7 @@ void INS_task(void const *pvParameters)
         accel_fliter_3[2] = accel_fliter_2[2] * fliter_num[0] + accel_fliter_1[2] * fliter_num[1] + INS_accel[2] * fliter_num[2];
 
 
-        AHRS_update(INS_quat, timing_time, INS_gyro, accel_fliter_3, INS_mag);
+        AHRS_update(INS_quat, timing_time, INS_gyro, accel_fliter_3, fusion_mag);
         get_angle(INS_quat, INS_angle + INS_YAW_ADDRESS_OFFSET, INS_angle + INS_PITCH_ADDRESS_OFFSET, INS_angle + INS_ROLL_ADDRESS_OFFSET);
 
     }

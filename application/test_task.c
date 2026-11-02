@@ -47,7 +47,7 @@ static const char *const error_name[ERROR_LIST_LENGHT] = {
 /* 以下打印函数仅在本文件使用，按需在任务循环中启用。 */
 
 /**
-  * @brief          按上发顺序打印原始 gyro（rad/s）、acc（m/s²）、mag（μT）
+  * @brief          按上发顺序打印补偿后的 gyro（rad/s）、acc（m/s²）、mag（μT）
   * @retval         无
   */
 static inline void test_print_imu(void)
