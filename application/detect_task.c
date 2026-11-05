@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "detect_task.h"
+#include "CAN_receive.h"
 #include "INS_task.h"
 #include "cmsis_os.h"
 #include "remote_control.h"
@@ -18,6 +19,7 @@ void detect_hook(uint8_t device)
 bool_t toe_is_error(uint8_t device)
 {
     if (device == REMOTE_TOE) return RC_data_is_error();
+    if (device <= CHASSIS_MOTOR4_TOE && get_chassis_motor_measure_point(device)->state > 1U) return 1;
     return device >= ERROR_LIST_LENGHT || error_list[device].error_exist;
 }
 
@@ -60,7 +62,8 @@ void detect_task(void const *argument)
             }
             uint8_t lost = (now - error_list[i].new_time) > pdMS_TO_TICKS(offline_ms[i]);
             error_list[i].is_lost = lost;
-            error_list[i].error_exist = lost;
+            error_list[i].error_exist = lost ||
+                (i <= CHASSIS_MOTOR4_TOE && get_chassis_motor_measure_point(i)->state > 1U);
         }
         osDelay(10);
     }

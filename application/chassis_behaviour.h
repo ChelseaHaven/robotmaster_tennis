@@ -22,7 +22,7 @@
 #define CHASSIS_RC_SWA_MIDDLE_VALUE 992U
 #define CHASSIS_RC_SWA_HIGH_VALUE 192U
 #define CHASSIS_RC_SWB_CHANNEL 6U
-#define CHASSIS_RC_SWB_ZERO_CURRENT_VALUE 192U
+#define CHASSIS_RC_SWB_DISABLED_VALUE 192U
 #define CHASSIS_RC_SWB_HOLD_VALUE 1792U
 #define CHASSIS_RC_LOW_MAX_LINEAR_SPEED 0.5f
 #define CHASSIS_RC_LOW_MAX_YAW_SPEED 1.0f
@@ -52,7 +52,7 @@ typedef enum {
     CHASSIS_HOST_MODE,
 } chassis_mode_t;
 typedef enum {
-    CHASSIS_STOP_ZERO_CURRENT = 0,
+    CHASSIS_STOP_DISABLED = 0,
     CHASSIS_STOP_SPEED_HOLD,
 } chassis_stop_mode_t;
 typedef struct {
@@ -73,7 +73,7 @@ typedef struct {
   * @param[in]      host: 上位机速度快照
   * @param[out]     control: 当前模式及车体速度指令
   * @note           SWA 选择遥控限速，SWB 选择零速停车方式；SWC 选控制源，SWD 下档急停。
-  *                 遥控失联时急停并给零电流。
+  *                 遥控失联时急停并失能驱动器。
   *                 切入上位机模式后等待一帧新的有效速度指令。
   * @retval         无
   */

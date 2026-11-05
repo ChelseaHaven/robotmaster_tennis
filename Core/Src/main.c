@@ -32,6 +32,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "bsp_can.h"
+#include "bsp_can_fifo.h"
 #include "bsp_delay.h"
 #include "calibrate_task.h"
 #include "bsp_buzzer.h"
@@ -123,6 +124,7 @@ int main(void)
   HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_2);  /* LED G */
   HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_3);  /* LED R */
   HAL_TIM_PWM_Start(&htim10, TIM_CHANNEL_1); /* IMU heater */
+  can_fifo_init();
   can_filter_init();
   cali_param_init();
   remote_control_init();

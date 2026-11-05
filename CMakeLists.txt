@@ -45,6 +45,7 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     application/CAN_receive.c
+    application/can_task.c
     application/INS_task.c
     application/calibrate_task.c
     application/chassis_task.c
@@ -62,6 +63,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     bsp/boards/bsp_host_uart.c
     bsp/boards/bsp_buzzer.c
     bsp/boards/bsp_can.c
+    bsp/boards/bsp_can_fifo.c
     bsp/boards/bsp_delay.c
     bsp/boards/bsp_flash.c
     bsp/boards/bsp_imu_pwm.c

@@ -61,23 +61,20 @@ static inline void test_print_imu(void)
 }
 
 /**
-  * @brief          一行打印四轮编码器换算的线速度，单位 m/s
+  * @brief          一行打印四轮反馈角速度，与上发方向一致，单位 rad/s
   * @retval         无
   */
 static inline void test_print_motor_speed(void)
 {
-    int16_t speed_rpm[4];
-    for (uint8_t i = 0; i < 4; ++i)
+    fp32 speed[CHASSIS_MOTOR_COUNT];
+    for (uint8_t i = 0; i < CHASSIS_MOTOR_COUNT; ++i)
     {
         const motor_measure_t *motor = get_chassis_motor_measure_point(i);
-        speed_rpm[i] = motor->speed_rpm;
+        // if (!motor->velocity_range_valid || !motor->feedback_received) return;
+        speed[i] = motor->speed_rad_s;
     }
-    const float rpm_to_mps = 3.14159265358979323846f * 0.127f / (60.0f * 19.2f);
-    printf("motor1:%.3f, motor2:%.3f, motor3:%.3f, motor4:%.3f m/s\r\n",
-           speed_rpm[0] * rpm_to_mps,
-           speed_rpm[1] * rpm_to_mps,
-           speed_rpm[2] * rpm_to_mps,
-           speed_rpm[3] * rpm_to_mps);
+    printf("motor1:%.3f, motor2:%.3f, motor3:%.3f, motor4:%.3f rad/s\r\n",
+           speed[0], speed[1], speed[2], speed[3]);
 }
 
 /**
@@ -240,10 +237,10 @@ void test_task(void const * argument)
 
             // 按需取消注释，每组打印保持在 100 ms 周期内。
             // test_print_imu();
-            // test_print_motor_speed();
+            test_print_motor_speed();
             // test_print_remote();
             // test_print_host_velocity();
-            test_print_battery();
+            // test_print_battery();
             // test_print_errors();
         }
         osDelay(10);

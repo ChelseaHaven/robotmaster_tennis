@@ -2,27 +2,43 @@
 #define CAN_RECEIVE_H
 #include "struct_typedef.h"
 
+#define CHASSIS_MOTOR_COUNT 4U
+#define CHASSIS_MOTOR_TX_BASE_ID 0x201U
+#define CHASSIS_MOTOR_RX_BASE_ID 0x11U
+
 typedef struct
 {
-    // 角度、电流和 raw_speed_rpm 保留电调原始方向。
-    uint16_t ecd;
-    int16_t raw_speed_rpm; // 原始转速，供现有轮速闭环使用
-    int16_t speed_rpm;     // 显示和上发转速，1、4 号取反，前进时四轮同为正
-    int16_t given_current;
-    uint8_t temperate;
-    int16_t last_ecd;
+    uint16_t position_raw;     // 16 位位置编码
+    uint16_t velocity_raw;     // 12 位速度编码
+    uint16_t torque_raw;       // 12 位扭矩编码
+    fp32 velocity_range;       // 从驱动器读取的 VMAX，rad/s
+    fp32 raw_speed_rad_s;      // 输出轴原始方向的角速度，rad/s
+    fp32 speed_rad_s;          // 上发角速度，沿用 1、4 号取反的轮子方向
+    uint8_t velocity_range_valid;
+    uint8_t feedback_received;
+    uint8_t state;             // 0 失能，1 使能，其他值为故障
+    uint8_t mos_temperature;
+    uint8_t rotor_temperature;
 } motor_measure_t;
 
 /**
-  * @brief          通过 CAN1 的 0x200 报文发送四路电调电流指令
-  * @param[in]      motor1: 1 号电调电流指令
-  * @param[in]      motor2: 2 号电调电流指令
-  * @param[in]      motor3: 3 号电调电流指令
-  * @param[in]      motor4: 4 号电调电流指令
-  * @note           C620 的 ±16384 对应 ±20 A；本函数不再限幅。
+  * @brief          按四个驱动器的输出轴角速度发送速度模式指令
+  * @param[in]      motor1: 1 号目标角速度，rad/s
+  * @param[in]      motor2: 2 号目标角速度，rad/s
+  * @param[in]      motor3: 3 号目标角速度，rad/s
+  * @param[in]      motor4: 4 号目标角速度，rad/s
+  * @param[in]      enable_mask: 位 0～3 分别控制四个驱动器是否允许使能
+  * @note           所有帧通过 CAN FIFO；未读到 VMAX、无有效反馈或故障时保持失能。
   * @retval         无
   */
-void CAN_cmd_chassis(int16_t motor1, int16_t motor2, int16_t motor3, int16_t motor4);
+void CAN_cmd_chassis(fp32 motor1, fp32 motor2, fp32 motor3, fp32 motor4, uint8_t enable_mask);
+
+/**
+  * @brief          周期读取尚未获取的速度映射参数 VMAX
+  * @note           在底盘任务中调用，每 20 ms 最多发送一个只读参数请求。
+  * @retval         无
+  */
+void chassis_motor_service(void);
 
 /**
   * @brief          获取指定底盘电机的反馈数据

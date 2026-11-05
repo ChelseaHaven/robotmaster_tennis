@@ -77,14 +77,15 @@ void host_comm_send_periodic(uint32_t now_ms)
     static uint32_t last_wheel_send_ms;
     static uint32_t last_imu_send_ms;
     if ((uint32_t)(now_ms - last_wheel_send_ms) >= HOST_WHEEL_SPEED_PERIOD_MS) {
-        // 电机转速除以 19.2 减速比，换算为轮端角速度 rad/s。
-        const float rpm_to_rad_s = 2.0f * 3.14159265358979323846f / (60.0f * 19.2f);
+        // 普通达妙反馈已经是减速后输出轴 rad/s，无需再除减速比。
+        uint8_t wheel_ready = 1U;
         float wheel_speed[4];
         for (uint8_t i = 0; i < 4; ++i) {
             const motor_measure_t *motor = get_chassis_motor_measure_point(i);
-            wheel_speed[i] = motor->speed_rpm * rpm_to_rad_s;
+            wheel_speed[i] = motor->speed_rad_s;
+            if (!motor->velocity_range_valid || !motor->feedback_received) wheel_ready = 0U;
         }
-        if (host_comm_send(HOST_CMD_WHEEL_SPEED, wheel_speed, sizeof(wheel_speed)))
+        if (wheel_ready && host_comm_send(HOST_CMD_WHEEL_SPEED, wheel_speed, sizeof(wheel_speed)))
             last_wheel_send_ms = now_ms;
     }
 

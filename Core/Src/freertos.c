@@ -27,6 +27,7 @@
 /* USER CODE BEGIN Includes */
 #include "calibrate_task.h"
 #include "chassis_task.h"
+#include "can_task.h"
 #include "detect_task.h"
 #include "INS_task.h"
 #include "led_flow_task.h"
@@ -53,6 +54,7 @@
 /* USER CODE BEGIN Variables */
 osThreadId calibrateHandle;
 osThreadId chassisHandle;
+osThreadId canHandle;
 osThreadId detectHandle;
 osThreadId imuHandle;
 osThreadId ledHandle;
@@ -134,6 +136,9 @@ void MX_FREERTOS_Init(void) {
   testHandle = osThreadCreate(osThread(test), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
+  osThreadDef(can, can_task, osPriorityAboveNormal, 0, 256);
+  canHandle = osThreadCreate(osThread(can), NULL);
+
   osThreadDef(battery_voltage, battery_voltage_task, osPriorityNormal, 0, 128);
   batteryVoltageHandle = osThreadCreate(osThread(battery_voltage), NULL);
 
