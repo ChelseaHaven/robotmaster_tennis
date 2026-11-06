@@ -26,10 +26,10 @@
 #define CHASSIS_RC_SWB_HOLD_VALUE 1792U
 #define CHASSIS_RC_LOW_MAX_LINEAR_SPEED 0.5f
 #define CHASSIS_RC_LOW_MAX_YAW_SPEED 1.0f
-#define CHASSIS_RC_MIDDLE_MAX_LINEAR_SPEED 1.0f
-#define CHASSIS_RC_MIDDLE_MAX_YAW_SPEED 1.5f
-#define CHASSIS_RC_HIGH_MAX_LINEAR_SPEED 1.5f
-#define CHASSIS_RC_HIGH_MAX_YAW_SPEED 2.0f
+#define CHASSIS_RC_MIDDLE_MAX_LINEAR_SPEED 1.5f
+#define CHASSIS_RC_MIDDLE_MAX_YAW_SPEED 2.0f
+#define CHASSIS_RC_HIGH_MAX_LINEAR_SPEED 2.89f
+#define CHASSIS_RC_HIGH_MAX_YAW_SPEED 4.0f
 
 // 左摇杆 CH4/CH3 控制平移，右摇杆 CH1 控制旋转，CH2 忽略。
 // 实测：左右轴右增左减，前后轴前增后减，中值均为 992。
@@ -43,7 +43,7 @@
 #define CHASSIS_RC_CENTER 992U
 #define CHASSIS_RC_MAX 1792U
 #define CHASSIS_RC_DEADBAND 30U
-#define CHASSIS_MAX_LINEAR_SPEED 3.21f    // 车体平移合速度总上限，上位机也受此限制，m/s
+#define CHASSIS_MAX_LINEAR_SPEED 2.89f    // 车体平移合速度总上限，上位机也受此限制，m/s
 #define CHASSIS_MAX_YAW_SPEED 9.52f       // 车体角速度总上限，rad/s
 
 typedef enum {

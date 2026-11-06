@@ -12,8 +12,8 @@ typedef struct
     uint16_t velocity_raw;     // 12 位速度编码
     uint16_t torque_raw;       // 12 位扭矩编码
     fp32 velocity_range;       // 从驱动器读取的 VMAX，rad/s
-    fp32 raw_speed_rad_s;      // 输出轴原始方向的角速度，rad/s
-    fp32 speed_rad_s;          // 上发角速度，沿用 1、4 号取反的轮子方向
+    fp32 raw_speed_rad_s;      // 官方公式解码的原始角速度，保留零点量化偏差，rad/s
+    fp32 speed_rad_s;          // 打印及上发角速度，中间编码归零，按底层及轮序方向处理，rad/s
     uint8_t velocity_range_valid;
     uint8_t feedback_received;
     uint8_t state;             // 0 失能，1 使能，其他值为故障

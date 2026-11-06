@@ -8,12 +8,22 @@
 #include "main.h"
 
 static error_t error_list[ERROR_LIST_LENGHT];
-static const uint16_t offline_ms[ERROR_LIST_LENGHT] = {10, 10, 10, 10, 5, 5, 40, RC_FRAME_TIMEOUT_MS};
+static const uint16_t offline_ms[ERROR_LIST_LENGHT] = {CHASSIS_MOTOR_FEEDBACK_TIMEOUT_MS, CHASSIS_MOTOR_FEEDBACK_TIMEOUT_MS,
+    CHASSIS_MOTOR_FEEDBACK_TIMEOUT_MS, CHASSIS_MOTOR_FEEDBACK_TIMEOUT_MS,
+    5, 5, 40, RC_FRAME_TIMEOUT_MS};
 
 void detect_hook(uint8_t device)
 {
+    if (device >= ERROR_LIST_LENGHT || xTaskGetSchedulerState() == taskSCHEDULER_NOT_STARTED)
+        return;
+    error_list[device].new_time = __get_IPSR() ?
+        xTaskGetTickCountFromISR() : xTaskGetTickCount();
+}
+
+void detect_hook_at(uint8_t device, uint32_t receive_tick)
+{
     if (device < ERROR_LIST_LENGHT)
-        error_list[device].new_time = xTaskGetTickCountFromISR();
+        error_list[device].new_time = receive_tick;
 }
 
 bool_t toe_is_error(uint8_t device)

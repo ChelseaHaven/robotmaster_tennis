@@ -1,6 +1,8 @@
 #include "CAN_receive.h"
 #include "detect_task.h"
 #include "main.h"
+#include "FreeRTOS.h"
+#include "task.h"
 #include "bsp_can_fifo.h"
 #include <math.h>
 #include <string.h>
@@ -9,7 +11,6 @@
 #define MOTOR_PARAMETER_PERIOD_MS 20U
 #define MOTOR_SWITCH_RETRY_MS 100U
 
-extern CAN_HandleTypeDef hcan1;
 static motor_measure_t motor_chassis[CHASSIS_MOTOR_COUNT];
 
 /**
@@ -37,29 +38,23 @@ static HAL_StatusTypeDef send_speed(uint8_t index, fp32 speed)
 {
     uint32_t bits;
     uint8_t data[4];
+    speed = -speed;
     memcpy(&bits, &speed, sizeof(bits));
     for (unsigned i = 0; i < sizeof(data); ++i)
         data[i] = (uint8_t)(bits >> (8U * i));
     return can_fifo_tx_push(CHASSIS_MOTOR_TX_BASE_ID + index, data, sizeof(data));
 }
 
-/**
-  * @brief          接收普通达妙反馈帧及 VMAX 参数应答
-  * @param[in]      hcan: CAN 句柄，仅处理 CAN1
-  * @retval         无
-  */
-void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
+void can_fifo_rx_callback(const can_fifo_rx_frame_t *received)
 {
-    CAN_RxHeaderTypeDef header;
-    uint8_t data[8];
-    if (hcan != &hcan1 || HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &header, data) != HAL_OK)
-        return;
-    if (header.IDE != CAN_ID_STD || header.RTR != CAN_RTR_DATA || header.DLC != 8 ||
-        header.StdId < CHASSIS_MOTOR_RX_BASE_ID ||
-        header.StdId >= CHASSIS_MOTOR_RX_BASE_ID + CHASSIS_MOTOR_COUNT)
-        return;
-
-    unsigned index = header.StdId - CHASSIS_MOTOR_RX_BASE_ID;
+    if (received == NULL) return;
+    const can_fifo_frame_t *frame = &received->frame;
+    if (frame->dlc != 8U || frame->std_id < CHASSIS_MOTOR_RX_BASE_ID ||
+        frame->std_id >= CHASSIS_MOTOR_RX_BASE_ID + CHASSIS_MOTOR_COUNT) return;
+    if ((uint32_t)(xTaskGetTickCount() - received->receive_tick) >
+        pdMS_TO_TICKS(CHASSIS_MOTOR_FEEDBACK_TIMEOUT_MS)) return;
+    const uint8_t *data = frame->data;
+    unsigned index = frame->std_id - CHASSIS_MOTOR_RX_BASE_ID;
     motor_measure_t *motor = &motor_chassis[index];
     if (data[0] == index + 1U && data[1] == 0U && data[2] == 0x33U &&
         data[3] == MOTOR_VMAX_REGISTER)
@@ -87,10 +82,17 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
     if (motor->velocity_range_valid)
     {
         motor->raw_speed_rad_s = ((fp32)motor->velocity_raw * 2.0f / 4095.0f - 1.0f) * motor->velocity_range;
-        motor->speed_rad_s = (index == 0U || index == 3U) ?
-                            -motor->raw_speed_rad_s : motor->raw_speed_rad_s;
+        if (motor->velocity_raw == 2047U || motor->velocity_raw == 2048U)
+        {
+            motor->speed_rad_s = 0.0f;
+        }
+        else
+        {
+            motor->speed_rad_s = (index == 0U || index == 3U) ?
+                                motor->raw_speed_rad_s : -motor->raw_speed_rad_s;
+        }
     }
-    detect_hook(CHASSIS_MOTOR1_TOE + index);
+    detect_hook_at(CHASSIS_MOTOR1_TOE + index, received->receive_tick);
 }
 
 void chassis_motor_service(void)

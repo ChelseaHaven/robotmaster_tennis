@@ -2,6 +2,8 @@
 #define DETECT_TASK_H
 #include "struct_typedef.h"
 
+#define CHASSIS_MOTOR_FEEDBACK_TIMEOUT_MS 10U
+
 enum errorList
 {
     CHASSIS_MOTOR1_TOE = 0,
@@ -36,6 +38,14 @@ void detect_task(void const *argument);
   * @retval         无
   */
 void detect_hook(uint8_t device);
+
+/**
+  * @brief          按报文实际接收时刻更新指定设备的在线时间
+  * @param[in]      device: 设备索引，小于 ERROR_LIST_LENGHT
+  * @param[in]      receive_tick: FreeRTOS 接收时刻，单位 tick
+  * @retval         无
+  */
+void detect_hook_at(uint8_t device, uint32_t receive_tick);
 
 /**
   * @brief          查询指定设备是否存在检测错误

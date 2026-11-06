@@ -4,6 +4,7 @@
 #include "stm32f4xx_hal.h"
 
 #define CAN_FIFO_TX_LENGTH 64U
+#define CAN_FIFO_RX_LENGTH 128U
 
 typedef struct
 {
@@ -12,8 +13,14 @@ typedef struct
     uint8_t data[8];
 } can_fifo_frame_t;
 
+typedef struct
+{
+    can_fifo_frame_t frame;
+    uint32_t receive_tick;
+} can_fifo_rx_frame_t;
+
 /**
-  * @brief          初始化 CAN1 发送队列和统计计数
+  * @brief          初始化 CAN1 收发队列和统计计数
   * @note           在 CAN 启动和任务调度之前调用，运行中不可重复初始化。
   * @retval         无
   */
@@ -47,5 +54,52 @@ uint8_t can_fifo_tx_get_pending_count(void);
   * @retval         自初始化以来的队列满计数
   */
 uint32_t can_fifo_tx_get_drop_count(void);
+
+/**
+  * @brief          将接收帧及实际接收时刻复制到 RX 软件队列
+  * @param[in]      frame: 标准数据帧和接收时刻，使用 FreeRTOS tick
+  * @retval         HAL_OK 入队成功；HAL_BUSY 队列满；HAL_ERROR 参数错误
+  */
+HAL_StatusTypeDef can_fifo_rx_push(const can_fifo_rx_frame_t *frame);
+
+/**
+  * @brief          从 RX 软件队列按接收顺序取出一帧
+  * @param[out]     frame: 接收帧及接收时刻
+  * @retval         1 取到一帧；0 队列为空或指针无效
+  */
+uint8_t can_fifo_rx_pop(can_fifo_rx_frame_t *frame);
+
+/**
+  * @brief          每次最多取出 32 帧，调用应用回调进行解析
+  * @note           仅由 can_task 调用，不在中断中执行协议解析。
+  * @retval         无
+  */
+void can_fifo_rx_process(void);
+
+/**
+  * @brief          处理一帧已出队的标准 CAN 数据帧
+  * @param[in]      frame: 接收帧和实际接收时刻，仅在回调期间有效
+  * @note           默认弱实现为空，由 CAN_receive.c 实现达妙反馈解析。
+  * @retval         无
+  */
+void can_fifo_rx_callback(const can_fifo_rx_frame_t *frame);
+
+/**
+  * @brief          获取等待应用处理的接收帧数量
+  * @retval         RX 软件队列中的帧数
+  */
+uint8_t can_fifo_rx_get_pending_count(void);
+
+/**
+  * @brief          获取成功加入 RX 队列的累计帧数
+  * @retval         自初始化以来的成功入队帧数
+  */
+uint32_t can_fifo_rx_get_count(void);
+
+/**
+  * @brief          获取因 RX 软件队列满而丢弃的累计帧数
+  * @retval         自初始化以来的队列满计数，不包含硬件 FIFO 溢出
+  */
+uint32_t can_fifo_rx_get_drop_count(void);
 
 #endif

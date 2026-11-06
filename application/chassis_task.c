@@ -8,7 +8,7 @@
 #include <math.h>
 
 #define CHASSIS_PERIOD_MS 2U
-#define MAX_WHEEL_SPEED 3.21f
+#define MAX_WHEEL_SPEED 2.89f
 
 #define WHEEL_DIAMETER_MM 127.0f       // 轮子直径，单位 mm
 #define WHEELBASE_MM 320.0f            // 前后轮中心距，单位 mm
