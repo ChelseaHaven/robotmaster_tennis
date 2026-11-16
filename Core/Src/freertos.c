@@ -33,7 +33,7 @@
 #include "led_flow_task.h"
 #include "voltage_task.h"
 #include "host_comm_task.h"
-#include "pressure_task.h"
+#include "launcher_task.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -61,7 +61,7 @@ osThreadId imuHandle;
 osThreadId ledHandle;
 osThreadId batteryVoltageHandle;
 osThreadId hostCommHandle;
-osThreadId pressureHandle;
+osThreadId launcherHandle;
 /* USER CODE END Variables */
 osThreadId testHandle;
 
@@ -139,8 +139,8 @@ void MX_FREERTOS_Init(void) {
   testHandle = osThreadCreate(osThread(test), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
-  osThreadDef(pressure, pressure_task, osPriorityNormal, 0, 256);
-  pressureHandle = osThreadCreate(osThread(pressure), NULL);
+  osThreadDef(launcher, launcher_task, osPriorityNormal, 0, 256);
+  launcherHandle = osThreadCreate(osThread(launcher), NULL);
 
   osThreadDef(can, can_task, osPriorityAboveNormal, 0, 256);
   canHandle = osThreadCreate(osThread(can), NULL);

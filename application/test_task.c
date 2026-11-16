@@ -27,7 +27,7 @@
 #include "host_comm_task.h"
 #include "voltage_task.h"
 #include "calibrate_task.h"
-#include "pressure_task.h"
+#include "pressure.h"
 
 
 static void buzzer_warn_error(uint8_t num);

@@ -1,5 +1,5 @@
-#ifndef PRESSURE_TASK_H
-#define PRESSURE_TASK_H
+#ifndef PRESSURE_H
+#define PRESSURE_H
 #include <stdint.h>
 #define PRESSURE_SENSOR_COUNT 2U
 #define PRESSURE_SENSOR_1_ADDR 0x01U
@@ -16,9 +16,15 @@ typedef struct {
   */
 void pressure_get_snapshot(pressure_data_t data[PRESSURE_SENSOR_COUNT]);
 /**
-  * @brief          初始化串口并以固定 5 ms 节拍处理双传感器轮询
-  * @param[in]      argument: 任务参数，未使用
+  * @brief          初始化压力读数、轮询状态和 USART1 接收
+  * @note           由发球任务在循环前调用一次
   * @retval         无
   */
-void pressure_task(void const *argument);
+void pressure_init(void);
+/**
+  * @brief          更新压力数据，处理接收解析、回复超时及双传感器轮询
+  * @note           由发球任务每 5 ms 调用；请求间隔 50 ms，回复超时 35 ms
+  * @retval         无
+  */
+void pressure_update(void);
 #endif

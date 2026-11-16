@@ -46,7 +46,8 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     application/CAN_receive.c
     application/can_task.c
-    application/pressure_task.c
+    application/launcher_task.c
+    components/devices/pressure.c
     bsp/boards/bsp_pressure_uart.c
     components/algorithm/modbus_crc.c
     application/INS_task.c
@@ -65,6 +66,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     components/algorithm/CRC8_CRC16.c
     bsp/boards/bsp_host_uart.c
     bsp/boards/bsp_buzzer.c
+    bsp/boards/bsp_servo_pwm.c
     bsp/boards/bsp_can.c
     bsp/boards/bsp_can_fifo.c
     bsp/boards/bsp_delay.c
