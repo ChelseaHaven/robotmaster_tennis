@@ -11,6 +11,9 @@ typedef struct
     uint16_t position_raw;     // 16 位位置编码
     uint16_t velocity_raw;     // 12 位速度编码
     uint16_t torque_raw;       // 12 位扭矩编码
+    fp32 torque_range;         // 从驱动器读取的 TMAX，N·m
+    fp32 torque_nm;            // 输出轴转矩，方向与上发轮速一致，N·m
+    uint8_t torque_range_valid;
     fp32 velocity_range;       // 从驱动器读取的 VMAX，rad/s
     fp32 raw_speed_rad_s;      // 官方公式解码的原始角速度，保留零点量化偏差，rad/s
     fp32 speed_rad_s;          // 打印及上发角速度，中间编码归零，按底层及轮序方向处理，rad/s
@@ -34,7 +37,7 @@ typedef struct
 void CAN_cmd_chassis(fp32 motor1, fp32 motor2, fp32 motor3, fp32 motor4, uint8_t enable_mask);
 
 /**
-  * @brief          周期读取尚未获取的速度映射参数 VMAX
+  * @brief          周期读取尚未获取的速度及转矩映射参数 VMAX、TMAX
   * @note           在底盘任务中调用，每 20 ms 最多发送一个只读参数请求。
   * @retval         无
   */

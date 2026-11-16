@@ -9,6 +9,10 @@
 #define HOST_CMD_IMU_RAW 0x0102U
 #define HOST_IMU_RAW_PAYLOAD_SIZE 36U
 
+// 上行四轮输出轴转矩：右前、左前、左后、右后，四个小端 float32，单位 N·m。
+#define HOST_CMD_WHEEL_TORQUE 0x0103U
+#define HOST_WHEEL_TORQUE_PAYLOAD_SIZE 16U
+
 /* 3566 下发车体系速度：vx 向前、vy 向左、wz 逆时针为正。
  * 单位依次为 m/s、m/s、rad/s。命令 0x0101 已由位姿改为速度。
  * 线上格式为三个小端 IEEE 754 float32，不直接映射结构体。 */

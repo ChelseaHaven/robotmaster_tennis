@@ -12,6 +12,7 @@
 #define HOST_RX_QUEUE_DEPTH 8U
 #define HOST_WHEEL_SPEED_PERIOD_MS 10U
 #define HOST_IMU_RAW_PERIOD_MS 10U
+#define HOST_WHEEL_TORQUE_PERIOD_MS 100U
 static QueueHandle_t tx_queue, rx_queue;
 static host_parser_t parser;
 static host_velocity_t latest_velocity;
@@ -76,6 +77,7 @@ void host_comm_send_periodic(uint32_t now_ms)
 {
     static uint32_t last_wheel_send_ms;
     static uint32_t last_imu_send_ms;
+    static uint32_t last_torque_send_ms;
     if ((uint32_t)(now_ms - last_wheel_send_ms) >= HOST_WHEEL_SPEED_PERIOD_MS) {
         // 普通达妙反馈已经是减速后输出轴 rad/s，无需再除减速比。
         uint8_t wheel_ready = 1U;
@@ -87,6 +89,20 @@ void host_comm_send_periodic(uint32_t now_ms)
         }
         if (wheel_ready && host_comm_send(HOST_CMD_WHEEL_SPEED, wheel_speed, sizeof(wheel_speed)))
             last_wheel_send_ms = now_ms;
+    }
+
+    if ((uint32_t)(now_ms - last_torque_send_ms) >= HOST_WHEEL_TORQUE_PERIOD_MS) {
+        uint8_t torque_ready = 1U;
+        float wheel_torque[CHASSIS_MOTOR_COUNT];
+        for (uint8_t i = 0; i < CHASSIS_MOTOR_COUNT; ++i) {
+            const motor_measure_t *motor = get_chassis_motor_measure_point(i);
+            wheel_torque[i] = motor->torque_nm;
+            if (!motor->torque_range_valid || !motor->feedback_received) torque_ready = 0U;
+        }
+        _Static_assert(sizeof(wheel_torque) == HOST_WHEEL_TORQUE_PAYLOAD_SIZE,
+                       "Wheel torque payload must be 16 bytes");
+        if (torque_ready && host_comm_send(HOST_CMD_WHEEL_TORQUE, wheel_torque, sizeof(wheel_torque)))
+            last_torque_send_ms = now_ms;
     }
 
     if ((uint32_t)(now_ms - last_imu_send_ms) >= HOST_IMU_RAW_PERIOD_MS) {

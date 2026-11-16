@@ -8,6 +8,7 @@
 #include <string.h>
 
 #define MOTOR_VMAX_REGISTER 0x16U
+#define MOTOR_TMAX_REGISTER 0x17U
 #define MOTOR_PARAMETER_PERIOD_MS 20U
 #define MOTOR_SWITCH_RETRY_MS 100U
 
@@ -57,14 +58,20 @@ void can_fifo_rx_callback(const can_fifo_rx_frame_t *received)
     unsigned index = frame->std_id - CHASSIS_MOTOR_RX_BASE_ID;
     motor_measure_t *motor = &motor_chassis[index];
     if (data[0] == index + 1U && data[1] == 0U && data[2] == 0x33U &&
-        data[3] == MOTOR_VMAX_REGISTER)
+        (data[3] == MOTOR_VMAX_REGISTER || data[3] == MOTOR_TMAX_REGISTER))
     {
         fp32 range = read_float_le(&data[4]);
         if (isfinite(range) && range > 0.0f)
         {
-            motor->velocity_range = range;
-            motor->feedback_received = 0U;
-            motor->velocity_range_valid = 1U;
+            if (data[3] == MOTOR_VMAX_REGISTER) {
+                motor->velocity_range = range;
+                motor->feedback_received = 0U;
+                motor->velocity_range_valid = 1U;
+            } else {
+                motor->torque_range = range;
+                motor->feedback_received = 0U;
+                motor->torque_range_valid = 1U;
+            }
         }
         return;
     }
@@ -92,6 +99,10 @@ void can_fifo_rx_callback(const can_fifo_rx_frame_t *received)
                                 motor->raw_speed_rad_s : -motor->raw_speed_rad_s;
         }
     }
+    if (motor->torque_range_valid) {
+        fp32 torque = ((fp32)motor->torque_raw * 2.0f / 4095.0f - 1.0f) * motor->torque_range;
+        motor->torque_nm = (index == 0U || index == 3U) ? torque : -torque;
+    }
     detect_hook_at(CHASSIS_MOTOR1_TOE + index, received->receive_tick);
 }
 
@@ -105,8 +116,11 @@ void chassis_motor_service(void)
     {
         uint8_t index = next_motor;
         next_motor = (uint8_t)((next_motor + 1U) % CHASSIS_MOTOR_COUNT);
-        if (motor_chassis[index].velocity_range_valid) continue;
-        uint8_t data[8] = {index + 1U, 0U, 0x33U, MOTOR_VMAX_REGISTER, 0U, 0U, 0U, 0U};
+        uint8_t reg;
+        if (!motor_chassis[index].velocity_range_valid) reg = MOTOR_VMAX_REGISTER;
+        else if (!motor_chassis[index].torque_range_valid) reg = MOTOR_TMAX_REGISTER;
+        else continue;
+        uint8_t data[8] = {index + 1U, 0U, 0x33U, reg, 0U, 0U, 0U, 0U};
         if (can_fifo_tx_push(0x7FFU, data, sizeof(data)) == HAL_OK) last_request_ms = now;
         break;
     }
