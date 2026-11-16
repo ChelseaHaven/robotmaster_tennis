@@ -33,6 +33,7 @@
 #include "led_flow_task.h"
 #include "voltage_task.h"
 #include "host_comm_task.h"
+#include "pressure_task.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -60,6 +61,7 @@ osThreadId imuHandle;
 osThreadId ledHandle;
 osThreadId batteryVoltageHandle;
 osThreadId hostCommHandle;
+osThreadId pressureHandle;
 /* USER CODE END Variables */
 osThreadId testHandle;
 
@@ -70,6 +72,7 @@ osThreadId testHandle;
 
 void test_task(void const * argument);
 
+extern void MX_USB_DEVICE_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /* GetIdleTaskMemory prototype (linked to static allocation support) */
@@ -136,6 +139,9 @@ void MX_FREERTOS_Init(void) {
   testHandle = osThreadCreate(osThread(test), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
+  osThreadDef(pressure, pressure_task, osPriorityNormal, 0, 256);
+  pressureHandle = osThreadCreate(osThread(pressure), NULL);
+
   osThreadDef(can, can_task, osPriorityAboveNormal, 0, 256);
   canHandle = osThreadCreate(osThread(can), NULL);
 
@@ -172,6 +178,8 @@ void MX_FREERTOS_Init(void) {
 /* USER CODE END Header_test_task */
 __weak void test_task(void const * argument)
 {
+  /* init code for USB_DEVICE */
+  MX_USB_DEVICE_Init();
   /* USER CODE BEGIN test_task */
   /* Infinite loop */
   for(;;)

@@ -3,6 +3,7 @@
 #include "struct_typedef.h"
 
 #define CHASSIS_MOTOR_FEEDBACK_TIMEOUT_MS 10U
+#define PRESSURE_FEEDBACK_TIMEOUT_MS 300U
 
 enum errorList
 {
@@ -14,6 +15,8 @@ enum errorList
     BOARD_ACCEL_TOE,
     BOARD_MAG_TOE,
     REMOTE_TOE,
+    PRESSURE_SENSOR1_TOE,
+    PRESSURE_SENSOR2_TOE,
     ERROR_LIST_LENGHT,
 };
 

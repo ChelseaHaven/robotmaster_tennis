@@ -27,6 +27,7 @@
 #include "spi.h"
 #include "tim.h"
 #include "usart.h"
+#include "usb_device.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -113,11 +114,12 @@ int main(void)
   MX_RTC_Init();
   MX_TIM3_Init();
   MX_TIM10_Init();
-  MX_USART1_UART_Init();
   MX_USART6_UART_Init();
   MX_ADC1_Init();
   MX_ADC3_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
+  MX_USB_DEVICE_Init();
   delay_init();
   HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3);  /* buzzer */
   HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_1);  /* LED B */

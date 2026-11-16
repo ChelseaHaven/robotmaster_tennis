@@ -46,6 +46,9 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     application/CAN_receive.c
     application/can_task.c
+    application/pressure_task.c
+    bsp/boards/bsp_pressure_uart.c
+    components/algorithm/modbus_crc.c
     application/INS_task.c
     application/calibrate_task.c
     application/chassis_task.c

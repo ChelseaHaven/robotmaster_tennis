@@ -82,6 +82,13 @@ __attribute__((weak)) int _write(int file, char *ptr, int len)
   (void)file;
   int DataIdx;
 
+  /* 未安装输出接口时直接返回，避免调用空函数指针。 */
+  if (__io_putchar == 0)
+  {
+    errno = ENOSYS;
+    return -1;
+  }
+
   for (DataIdx = 0; DataIdx < len; DataIdx++)
   {
     __io_putchar(*ptr++);

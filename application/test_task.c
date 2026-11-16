@@ -27,6 +27,7 @@
 #include "host_comm_task.h"
 #include "voltage_task.h"
 #include "calibrate_task.h"
+#include "pressure_task.h"
 
 
 static void buzzer_warn_error(uint8_t num);
@@ -41,6 +42,8 @@ static const char *const error_name[ERROR_LIST_LENGHT] = {
     "ACCEL",
     "MAG",
     "REMOTE",
+    "PRESSURE_SENSOR1",
+    "PRESSURE_SENSOR2",
 };
 
 
@@ -121,6 +124,18 @@ static inline void test_print_battery(void)
     printf("battery: %.2f V, %u%%\r\n",
            (double)battery_voltage,
            (unsigned)get_battery_percentage());
+}
+
+/**
+  * @brief          打印两路压力原始读数
+  * @retval         无
+  */
+static inline void test_print_pressure(void)
+{
+    pressure_data_t pressure[PRESSURE_SENSOR_COUNT];
+    pressure_get_snapshot(pressure);
+    printf("pressure1:%u, pressure2:%u\r\n",
+           (unsigned)pressure[0].value, (unsigned)pressure[1].value);
 }
 
 /**
@@ -237,10 +252,11 @@ void test_task(void const * argument)
 
             // 按需取消注释，每组打印保持在 100 ms 周期内。
             // test_print_imu();
-            test_print_motor_speed();
+            // test_print_motor_speed();
             // test_print_remote();
             // test_print_host_velocity();
             // test_print_battery();
+            test_print_pressure();
             // test_print_errors();
         }
         osDelay(10);

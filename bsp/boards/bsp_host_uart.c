@@ -1,4 +1,5 @@
 #include "bsp_host_uart.h"
+#include "bsp_pressure_uart.h"
 #include "usart.h"
 #include <string.h>
 
@@ -64,6 +65,7 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *uart)
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *uart)
 {
     if (uart == &huart6) fault = 1;
+    if (uart == &huart1) bsp_pressure_uart_error();
 }
 
 uint8_t bsp_host_uart_service(void)

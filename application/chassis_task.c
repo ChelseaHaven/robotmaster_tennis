@@ -11,8 +11,10 @@
 #define MAX_WHEEL_SPEED 2.89f
 
 #define WHEEL_DIAMETER_MM 127.0f       // 轮子直径，单位 mm
-#define WHEELBASE_MM 320.0f            // 前后轮中心距，单位 mm
-#define TRACK_WIDTH_MM 354.6f          // 左右轮中心距，单位 mm
+// #define WHEELBASE_MM 320.0f            // 前后轮中心距，单位 mm
+// #define TRACK_WIDTH_MM 354.6f          // 左右轮中心距，单位 mm
+#define WHEELBASE_MM 420.0f            // 前后轮中心距，单位 mm
+#define TRACK_WIDTH_MM 400.0f          // 左右轮中心距，单位 mm
 
 #define WHEEL_RADIUS_M (WHEEL_DIAMETER_MM / 2000.0f)
 #define MOTOR_DISTANCE_TO_CENTER ((WHEELBASE_MM + TRACK_WIDTH_MM) / (2.0f * 1000.0f))
