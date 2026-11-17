@@ -48,6 +48,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     application/can_task.c
     application/launcher_task.c
     components/devices/pressure.c
+    components/devices/oid_motor.c
     bsp/boards/bsp_pressure_uart.c
     components/algorithm/modbus_crc.c
     application/INS_task.c

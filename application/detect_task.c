@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "detect_task.h"
+#include "oid_motor.h"
 #include "CAN_receive.h"
 #include "INS_task.h"
 #include "cmsis_os.h"
@@ -10,7 +11,8 @@
 static error_t error_list[ERROR_LIST_LENGHT];
 static const uint16_t offline_ms[ERROR_LIST_LENGHT] = {CHASSIS_MOTOR_FEEDBACK_TIMEOUT_MS, CHASSIS_MOTOR_FEEDBACK_TIMEOUT_MS,
     CHASSIS_MOTOR_FEEDBACK_TIMEOUT_MS, CHASSIS_MOTOR_FEEDBACK_TIMEOUT_MS,
-    5, 5, 40, RC_FRAME_TIMEOUT_MS, PRESSURE_FEEDBACK_TIMEOUT_MS, PRESSURE_FEEDBACK_TIMEOUT_MS};
+    5, 5, 40, RC_FRAME_TIMEOUT_MS, PRESSURE_FEEDBACK_TIMEOUT_MS, PRESSURE_FEEDBACK_TIMEOUT_MS,
+    OID_MOTOR_FEEDBACK_TIMEOUT_MS, OID_MOTOR_FEEDBACK_TIMEOUT_MS};
 
 void detect_hook(uint8_t device)
 {

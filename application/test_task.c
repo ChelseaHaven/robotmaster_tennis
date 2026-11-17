@@ -28,6 +28,7 @@
 #include "voltage_task.h"
 #include "calibrate_task.h"
 #include "pressure.h"
+#include "oid_motor.h"
 
 
 static void buzzer_warn_error(uint8_t num);
@@ -44,6 +45,8 @@ static const char *const error_name[ERROR_LIST_LENGHT] = {
     "REMOTE",
     "PRESSURE_SENSOR1",
     "PRESSURE_SENSOR2",
+    "LAUNCHER_MOTOR1",
+    "LAUNCHER_MOTOR2",
 };
 
 
@@ -78,6 +81,18 @@ static inline void test_print_motor_speed(void)
     }
     printf("motor1:%.3f, motor2:%.3f, motor3:%.3f, motor4:%.3f rad/s\r\n",
            speed[0], speed[1], speed[2], speed[3]);
+}
+
+/**
+  * @brief          一行打印两个 OID 发球电机反馈的电气转速，单位 eRPM
+  * @retval         无
+  */
+static inline void test_print_launcher_speed(void)
+{
+    oid_motor_measure_t motors[OID_MOTOR_COUNT];
+    oid_motor_get_snapshot(motors);
+    printf("launcher1:%ld, launcher2:%ld eRPM\r\n",
+           (long)motors[0].speed_erpm, (long)motors[1].speed_erpm);
 }
 
 /**
@@ -251,12 +266,13 @@ void test_task(void const * argument)
 
 
             // 按需取消注释，每组打印保持在 100 ms 周期内。
-            // test_print_imu();
+            test_print_imu();
             // test_print_motor_speed();
+            // test_print_launcher_speed();
             // test_print_remote();
             // test_print_host_velocity();
             // test_print_battery();
-            test_print_pressure();
+            // test_print_pressure();
             // test_print_errors();
         }
         osDelay(10);

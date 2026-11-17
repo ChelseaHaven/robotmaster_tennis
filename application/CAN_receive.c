@@ -1,4 +1,5 @@
 #include "CAN_receive.h"
+#include "oid_motor.h"
 #include "detect_task.h"
 #include "main.h"
 #include "FreeRTOS.h"
@@ -50,6 +51,10 @@ void can_fifo_rx_callback(const can_fifo_rx_frame_t *received)
 {
     if (received == NULL) return;
     const can_fifo_frame_t *frame = &received->frame;
+    if (frame->std_id == OID_MOTOR1_RX_ID || frame->std_id == OID_MOTOR2_RX_ID) {
+        oid_motor_receive(received);
+        return;
+    }
     if (frame->dlc != 8U || frame->std_id < CHASSIS_MOTOR_RX_BASE_ID ||
         frame->std_id >= CHASSIS_MOTOR_RX_BASE_ID + CHASSIS_MOTOR_COUNT) return;
     if ((uint32_t)(xTaskGetTickCount() - received->receive_tick) >
