@@ -4,12 +4,28 @@
 #include "host_command.h"
 
 #define HOST_VELOCITY_TIMEOUT_MS 500U
+#define HOST_LAUNCHER_TIMEOUT_MS 500U
+#define HOST_LAUNCHER_FEED_TIMEOUT_MS 500U
+
+typedef struct {
+    host_launcher_payload_t target;
+    uint32_t last_update_ms;  // 单片机收到并解析成功的时间
+    uint32_t frame_count;
+    uint8_t sequence;
+    uint8_t received;
+    uint8_t valid;
+} host_launcher_setpoint_t;
+
+/**
+  * @brief          在任务中复制上位机最新发球目标及有效状态
+  * @param[out]     setpoint: 发球目标快照；超时仍保留上次目标值
+  * @retval         1：已接收且未超时；0：空指针、未接收或超时
+  */
+uint8_t host_comm_get_launcher_setpoint(host_launcher_setpoint_t *setpoint);
 
 /* 最新车体系速度快照；超时只清除 valid，保留最后一次速度。 */
 typedef struct {
-    float vx;
-    float vy;
-    float wz;
+    host_velocity_payload_t target;
     uint32_t last_update_ms;  // 单片机收到并解析成功的时间
     uint32_t frame_count;
     uint8_t sequence;
@@ -23,6 +39,15 @@ typedef struct {
   * @retval         1：已接收且未超时；0：空指针、未接收或超时
   */
 uint8_t host_comm_get_velocity(host_velocity_t *velocity);
+
+/**
+  * @brief          非阻塞取出一次新拨球事件，读取后清除，不能作为持续有效的目标使用
+  * @param[out]     feed: 本次上升沿事件，trigger 为 1
+  * @note           仅 launcher_task 调用；0→1 触发，持续为 1 不触发，未取事件占用时新边沿丢弃。
+  * @note           开机或 HOST_LAUNCHER_FEED_TIMEOUT_MS 超时后清零，必须先收到 0 才能重新触发。
+  * @retval         1 取到新命令；0 无命令、过期或指针无效
+  */
+uint8_t host_comm_get_launcher_feed(host_feed_payload_t *feed);
 
 /**
   * @brief          在调度器启动前创建上位机通信收发队列
@@ -50,7 +75,7 @@ uint8_t host_comm_send(uint16_t command, const void *payload, uint16_t length);
 /**
   * @brief          在任务中非阻塞取出一帧已校验的接收数据
   * @param[out]     packet: 完整接收包
-  * @note           接收队列满时丢弃新帧；速度缓存仍会独立更新。
+  * @note           接收队列满时丢弃新帧；底盘速度及发球目标缓存仍会独立更新。
   * @retval         1：取到一帧；0：队列为空、未创建或参数无效
   */
 uint8_t host_comm_receive(host_packet_t *packet);

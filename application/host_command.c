@@ -35,3 +35,28 @@ uint8_t host_decode_velocity(const host_packet_t *packet, host_velocity_payload_
     *velocity = decoded;
     return 1;
 }
+
+uint8_t host_decode_launcher_setpoint(const host_packet_t *packet, host_launcher_payload_t *setpoint)
+{
+    if (!packet || !setpoint || packet->command != HOST_CMD_LAUNCHER_SETPOINT ||
+        packet->length != HOST_LAUNCHER_SETPOINT_PAYLOAD_SIZE) return 0;
+    host_launcher_payload_t decoded = {
+        .motor1_rpm = read_float_le(packet->payload),
+        .motor2_rpm = read_float_le(packet->payload + 4),
+        .pitch_deg = read_float_le(packet->payload + 8),
+    };
+    if (!isfinite(decoded.motor1_rpm) || !isfinite(decoded.motor2_rpm) ||
+        !isfinite(decoded.pitch_deg) || decoded.motor1_rpm < 0.0f ||
+        decoded.motor2_rpm < 0.0f) return 0;
+    *setpoint = decoded;
+    return 1;
+}
+
+uint8_t host_decode_launcher_feed(const host_packet_t *packet, host_feed_payload_t *feed)
+{
+    if (!packet || !feed || packet->command != HOST_CMD_LAUNCHER_FEED ||
+        packet->length != HOST_LAUNCHER_FEED_PAYLOAD_SIZE) return 0;
+    if (packet->payload[0] > 1U) return 0;
+    feed->trigger = packet->payload[0];
+    return 1;
+}

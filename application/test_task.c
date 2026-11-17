@@ -127,7 +127,7 @@ static inline void test_print_host_velocity(void)
     host_velocity_t velocity;
     if (!host_comm_get_velocity(&velocity)) return;
     printf("vx:%.3f, vy:%.3f, wz:%.3f\r\n",
-           velocity.vx, velocity.vy, velocity.wz);
+           velocity.target.vx, velocity.target.vy, velocity.target.wz);
 }
 
 /**

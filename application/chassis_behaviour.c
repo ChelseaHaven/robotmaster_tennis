@@ -121,10 +121,10 @@ void chassis_behaviour_update(chassis_behaviour_t *behaviour,
     } else if (control->mode == CHASSIS_HOST_MODE) {
         control->host_waiting = 1;
         if (host && host->valid && host->frame_count != behaviour->host_entry_frame &&
-            isfinite(host->vx) && isfinite(host->vy) && isfinite(host->wz)) {
-            control->vx = host->vx;
-            control->vy = host->vy;
-            control->wz = host->wz;
+            isfinite(host->target.vx) && isfinite(host->target.vy) && isfinite(host->target.wz)) {
+            control->vx = host->target.vx;
+            control->vy = host->target.vy;
+            control->wz = host->target.wz;
             control->host_waiting = 0;
         }
     }
