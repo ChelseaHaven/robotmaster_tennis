@@ -16,6 +16,12 @@
   */
 
 #include "test_task.h"
+#include "bsp_usb_debug.h"
+#include "bsp_servo_pwm.h"
+#include <ctype.h>
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>
 #include <stdio.h>
 #include "main.h"
 #include "cmsis_os.h"
@@ -215,6 +221,102 @@ static void buzzer_warn_error(uint8_t num)
     }
 }
 
+#define TEST_DEBUG_LINE_SIZE 96U
+
+/**
+  * @brief          解析以空白分隔的有限浮点参数，并检查参数数量及范围
+  * @param[in]      text: 参数字符串
+  * @param[out]     values: 可容纳 count 个参数的数组
+  * @param[in]      count: 期望参数数量
+  * @param[in]      minimum: 参数下限
+  * @param[in]      maximum: 参数上限
+  * @retval         1 参数合法；0 格式、数量或范围错误
+  */
+static uint8_t test_debug_parse_values(const char *text, float *values, unsigned count,
+                                       float minimum, float maximum)
+{
+    for (unsigned i = 0; i < count; ++i) {
+        while (isspace((unsigned char)*text)) ++text;
+        char *end;
+        float value = strtof(text, &end);
+        if (end == text || !isfinite(value) || value < minimum || value > maximum ||
+            (*end && !isspace((unsigned char)*end))) return 0;
+        values[i] = value;
+        text = end;
+    }
+    while (isspace((unsigned char)*text)) ++text;
+    return *text == '\0';
+}
+
+/**
+  * @brief          将一行文本解码为调试命令，仅填参数而不执行硬件动作
+  * @param[in]      line: 以零结尾的一行文本
+  * @param[out]     command: 合法命令及参数
+  * @retval         1 解析成功；0 未知命令或参数错误
+  */
+static uint8_t test_debug_parse_line(const char *line, test_debug_command_t *command)
+{
+    while (isspace((unsigned char)*line)) ++line;
+    const char *arguments = line;
+    while (*arguments && !isspace((unsigned char)*arguments)) ++arguments;
+    size_t size = (size_t)(arguments - line);
+    test_debug_command_t decoded = {0};
+    float values[2];
+    if (size == 5U && strncmp(line, "pitch", size) == 0) {
+        if (!test_debug_parse_values(arguments, values, 1U, 0.0f, SERVO_LAUNCHER_PITCH_MAX_ANGLE_DEG)) return 0;
+        decoded.type = TEST_DEBUG_PITCH;
+        decoded.angle_deg = values[0];
+    } else if (size == 9U && strncmp(line, "separator", size) == 0) {
+        if (!test_debug_parse_values(arguments, values, 1U, 0.0f, SERVO_BALL_SEPARATOR_MAX_ANGLE_DEG)) return 0;
+        decoded.type = TEST_DEBUG_SEPARATOR;
+        decoded.angle_deg = values[0];
+    } else if (size == 5U && strncmp(line, "speed", size) == 0) {
+        float maximum = (float)OID_MOTOR_MAX_ERPM / OID_MOTOR_POLE_PAIRS;
+        if (!test_debug_parse_values(arguments, values, 2U, -maximum, maximum)) return 0;
+        decoded.type = TEST_DEBUG_SPEED;
+        decoded.motor1_rpm = values[0];
+        decoded.motor2_rpm = values[1];
+    } else return 0;
+    *command = decoded;
+    return 1;
+}
+
+uint8_t test_get_debug_command(test_debug_command_t *command)
+{
+    static char line[TEST_DEBUG_LINE_SIZE];
+    static unsigned used;
+    static uint8_t discard;
+    if (!command) return 0;
+    for (unsigned i = 0; i < 512U; ++i) {
+        uint8_t byte;
+        int result = bsp_usb_debug_get_byte(&byte);
+        if (result == 0) return 0;
+        if (result < 0) {
+            used = 0U;
+            discard = result == -1;
+            continue;
+        }
+        if (byte == '\r' || byte == '\n') {
+            if (discard) { discard = 0U; used = 0U; continue; }
+            line[used] = '\0';
+            used = 0U;
+            if (test_debug_parse_line(line, command)) return 1;
+            continue;
+        }
+        if (discard) continue;
+        if (byte == '\b' || byte == 0x7FU) {
+            if (used) --used;
+        } else if ((byte >= 0x20U && byte <= 0x7EU) || byte == '\t') {
+            if (used + 1U < sizeof(line)) line[used++] = (char)byte;
+            else { discard = 1U; used = 0U; }
+        } else {
+            discard = 1U;
+            used = 0U;
+        }
+    }
+    return 0;
+}
+
 /**
   * @brief          播放开机旋律，周期检查报警并执行选中的串口打印
   * @param[in]      argument: 任务参数，未使用
@@ -227,6 +329,7 @@ void test_task(void const * argument)
     uint32_t last_print_tick = 0;
     enum { BUZZER_IDLE, BUZZER_BATTERY, BUZZER_CALIBRATION };
     uint8_t buzzer_mode = BUZZER_IDLE;
+    test_debug_command_t debug_command = {0};
     error_list_test_local = get_error_list_point();
     buzzer_play_startup_melody();
 
@@ -260,13 +363,27 @@ void test_task(void const * argument)
             // buzzer_warn_error(error_num+1);
         }
 
+        if (test_get_debug_command(&debug_command)) {
+            switch (debug_command.type) {
+            case TEST_DEBUG_PITCH:
+                servo_pwm_set_angle(SERVO_LAUNCHER_PITCH, debug_command.angle_deg);
+                break;
+            case TEST_DEBUG_SEPARATOR:
+                servo_pwm_set_angle(SERVO_BALL_SEPARATOR, debug_command.angle_deg);
+                break;
+            case TEST_DEBUG_SPEED:
+                oid_motor_set_speed((int32_t)(debug_command.motor1_rpm * OID_MOTOR_POLE_PAIRS), (int32_t)(debug_command.motor2_rpm * OID_MOTOR_POLE_PAIRS));
+                break;
+            }
+        }
+
         if (xTaskGetTickCount() - last_print_tick >= pdMS_TO_TICKS(100))
         {
             last_print_tick = xTaskGetTickCount();
 
 
             // 按需取消注释，每组打印保持在 100 ms 周期内。
-            test_print_imu();
+            // test_print_imu();
             // test_print_motor_speed();
             // test_print_launcher_speed();
             // test_print_remote();

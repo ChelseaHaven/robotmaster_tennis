@@ -300,7 +300,7 @@ void launcher_task(void const *argument)
         if (setpoint.received) {
             pitch_deg = setpoint.target.pitch_deg;
             if (pitch_deg < 0.0f) pitch_deg = 0.0f;
-            if (pitch_deg > SERVO_MAX_ANGLE_DEG) pitch_deg = SERVO_MAX_ANGLE_DEG;
+            if (pitch_deg > SERVO_LAUNCHER_PITCH_MAX_ANGLE_DEG) pitch_deg = SERVO_LAUNCHER_PITCH_MAX_ANGLE_DEG;
         }
         TickType_t now = xTaskGetTickCount();
         if ((TickType_t)(now - last_control) >= pdMS_TO_TICKS(LAUNCHER_MOTOR_CONTROL_PERIOD_MS)) {

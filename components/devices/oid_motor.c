@@ -27,6 +27,7 @@ static HAL_StatusTypeDef oid_send_speed(uint8_t index, int32_t speed)
         const uint8_t stop[3] = {OID_CMD_CURRENT, 0U, 0U};
         return can_fifo_tx_push(tx_id[index], stop, sizeof(stop));
     }
+    if (index == 1U) speed = -speed;
     uint32_t bits = (uint32_t)speed;
     uint8_t data[5] = {OID_CMD_SPEED, (uint8_t)(bits >> 24),
         (uint8_t)(bits >> 16), (uint8_t)(bits >> 8), (uint8_t)bits};
@@ -36,14 +37,10 @@ static HAL_StatusTypeDef oid_send_speed(uint8_t index, int32_t speed)
 HAL_StatusTypeDef oid_motor_set_speed(int32_t motor1_erpm, int32_t motor2_erpm)
 {
     int32_t values[OID_MOTOR_COUNT] = {motor1_erpm, motor2_erpm};
-    oid_motor_measure_t motors[OID_MOTOR_COUNT];
-    oid_motor_get_snapshot(motors);
     HAL_StatusTypeDef result = HAL_OK;
     for (uint8_t i = 0; i < OID_MOTOR_COUNT; ++i) {
         if (values[i] > OID_MOTOR_MAX_ERPM) values[i] = OID_MOTOR_MAX_ERPM;
         if (values[i] < -OID_MOTOR_MAX_ERPM) values[i] = -OID_MOTOR_MAX_ERPM;
-        if (!motors[i].speed_received || !motors[i].fault_received ||
-            motors[i].fault != 0U || toe_is_error(LAUNCHER_MOTOR1_TOE + i)) values[i] = 0;
         HAL_StatusTypeDef status = oid_send_speed(i, values[i]);
         if (status != HAL_OK) result = status;
     }
@@ -87,6 +84,10 @@ void oid_motor_receive(const can_fifo_rx_frame_t *received)
                             ((uint32_t)data[4] << 8) | data[5];
             int32_t speed;
             memcpy(&speed, &bits, sizeof(speed));
+            if (i == 1U) {
+                if (speed == INT32_MIN) return;
+                speed = -speed;
+            }
             taskENTER_CRITICAL();
             feedback[i].speed_erpm = speed;
             feedback[i].speed_received = 1U;

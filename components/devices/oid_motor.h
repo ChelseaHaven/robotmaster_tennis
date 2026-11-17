@@ -4,10 +4,10 @@
 #include "bsp_can_fifo.h"
 
 #define OID_MOTOR_COUNT 2U
-#define OID_MOTOR1_TX_ID 0x205U
-#define OID_MOTOR2_TX_ID 0x206U
-#define OID_MOTOR1_RX_ID 0x15U
-#define OID_MOTOR2_RX_ID 0x16U
+#define OID_MOTOR1_TX_ID 0x15U
+#define OID_MOTOR2_TX_ID 0x16U
+#define OID_MOTOR1_RX_ID 0x205U
+#define OID_MOTOR2_RX_ID 0x206U
 #define OID_MOTOR_MAX_ERPM 70000L
 #define OID_MOTOR_POLE_PAIRS 7U
 #define OID_MOTOR_FEEDBACK_TIMEOUT_MS 300U
@@ -24,7 +24,7 @@ typedef struct
   * @brief          将两个发球电机的电气转速控制帧直接加入 CAN 发送队列
   * @param[in]      motor1_erpm: 电机 1 电气转速，机械 rpm = eRPM / 极对数
   * @param[in]      motor2_erpm: 电机 2 电气转速，正负表示驱动器转向
-  * @note           限幅为正负 OID_MOTOR_MAX_ERPM；零目标、反馈未就绪或故障时发送零电流。
+  * @note           限幅为正负 OID_MOTOR_MAX_ERPM；零目标发送零电流，不以反馈状态作为发送前提。
   * @note           不缓存目标、不负责周期重发，由调用任务决定发送时机。
   * @retval         HAL_OK 两帧均已入队；其他值表示存在入队失败，可能部分成功
   */

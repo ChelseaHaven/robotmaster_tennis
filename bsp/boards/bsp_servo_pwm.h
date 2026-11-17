@@ -11,12 +11,13 @@ typedef enum {
 #define SERVO_PWM_MIN_US       500U
 #define SERVO_PWM_CENTER_US    1500U
 #define SERVO_PWM_MAX_US       2500U
-#define SERVO_MAX_ANGLE_DEG    270.0f
+#define SERVO_BALL_SEPARATOR_MAX_ANGLE_DEG 305.0f
+#define SERVO_LAUNCHER_PITCH_MAX_ANGLE_DEG 180.0f
 #define SERVO_STARTUP_US       SERVO_PWM_CENTER_US
 
 /**
-  * @brief          开启 C1、C2 的 50 Hz PWM，默认中位 135°
-  * @note           在 MX_TIM1_Init 后调用一次；硬件持续输出，不需要独立任务
+  * @brief          启动 C1、C2 PWM 通道，比较值清零，初始化不输出舵机位置脉冲
+  * @note           在 MX_TIM1_Init 后调用一次；收到角度或脉宽指令后才开始输出控制脉冲
   * @retval         无
   */
 void servo_pwm_init(void);
@@ -28,7 +29,7 @@ void servo_pwm_init(void);
   */
 void servo_pwm_set_us(servo_id_t servo, uint16_t pulse_us);
 /**
-  * @brief          设置舵机目标角度，限幅到 0～270°，135°为中位
+  * @brief          设置舵机目标角度，大舵机限幅 0～305°，小舵机限幅 0～180°
   * @param[in]      servo: SERVO_BALL_SEPARATOR 或 SERVO_LAUNCHER_PITCH
   * @param[in]      angle_deg: 角度，单位度，NaN/Inf 忽略
   * @note           角度是指令值，没有实际角度反馈

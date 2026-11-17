@@ -66,6 +66,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     application/host_command.c
     components/algorithm/CRC8_CRC16.c
     bsp/boards/bsp_host_uart.c
+    bsp/boards/bsp_usb_debug.c
     bsp/boards/bsp_buzzer.c
     bsp/boards/bsp_servo_pwm.c
     bsp/boards/bsp_can.c
