@@ -47,6 +47,7 @@ static uint8_t pressure_rx_byte(uint8_t byte)
     if (modbus_crc16(rx_frame, 5U) != crc) return 0;
     taskENTER_CRITICAL();
     pressure_data[active_sensor].value = (uint16_t)(((uint16_t)rx_frame[3] << 8U) | rx_frame[4]);
+    ++pressure_data[active_sensor].sample_count;
     taskEXIT_CRITICAL();
     detect_hook((uint8_t)(PRESSURE_SENSOR1_TOE + active_sensor));
     request_active = 0;
@@ -66,7 +67,10 @@ void pressure_init(void)
     rx_count = active_sensor = request_active = 0;
     next_sensor = waiting = has_sent = 0;
     last_request_ms = request_started_ms = 0;
-    for (uint8_t i = 0; i < PRESSURE_SENSOR_COUNT; i++) pressure_data[i].value = 0;
+    for (uint8_t i = 0; i < PRESSURE_SENSOR_COUNT; i++) {
+        pressure_data[i].value = 0;
+        pressure_data[i].sample_count = 0;
+    }
     bsp_pressure_uart_init();
 }
 

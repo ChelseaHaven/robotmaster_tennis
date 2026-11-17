@@ -7,6 +7,7 @@
 
 typedef struct {
     uint16_t value;  /* 原始寄存器值，未转换为物理单位。 */
+    uint32_t sample_count;  /* 每次收到合法应答递增，用于区分新采样与重复读取。 */
 } pressure_data_t;
 
 /**
@@ -23,7 +24,7 @@ void pressure_get_snapshot(pressure_data_t data[PRESSURE_SENSOR_COUNT]);
 void pressure_init(void);
 /**
   * @brief          更新压力数据，处理接收解析、回复超时及双传感器轮询
-  * @note           由发球任务每 5 ms 调用；请求间隔 50 ms，回复超时 35 ms
+  * @note           由发球任务周期调用；请求间隔 50 ms，回复超时 35 ms
   * @retval         无
   */
 void pressure_update(void);
