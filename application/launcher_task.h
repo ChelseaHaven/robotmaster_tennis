@@ -7,7 +7,7 @@
 #define LAUNCHER_MOTOR_FAULT_QUERY_PERIOD_MS 200U
 // PWM 初始化输出的指令角，上电后缓动到 LAUNCHER_BALL_START_SLOT。
 #define LAUNCHER_BALL_SEPARATOR_ANGLE_DEG     135.0f
-#define LAUNCHER_PITCH_ANGLE_DEG   135.0f
+#define LAUNCHER_PITCH_ANGLE_DEG    45.0f
 
 /* 四个分球工位的舵机指令角，后续按实物分别标定，不使用参考工程脉宽。 */
 #define LAUNCHER_BALL_SLOT_COUNT          4U

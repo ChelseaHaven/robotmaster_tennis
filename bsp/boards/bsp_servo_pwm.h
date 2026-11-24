@@ -12,7 +12,9 @@ typedef enum {
 #define SERVO_PWM_CENTER_US    1500U
 #define SERVO_PWM_MAX_US       2500U
 #define SERVO_BALL_SEPARATOR_MAX_ANGLE_DEG 305.0f
-#define SERVO_LAUNCHER_PITCH_MAX_ANGLE_DEG 180.0f
+#define SERVO_LAUNCHER_PITCH_MIN_US      1000U
+#define SERVO_LAUNCHER_PITCH_MAX_US      2000U
+#define SERVO_LAUNCHER_PITCH_MAX_ANGLE_DEG 90.0f
 #define SERVO_STARTUP_US       SERVO_PWM_CENTER_US
 
 /**
@@ -22,14 +24,14 @@ typedef enum {
   */
 void servo_pwm_init(void);
 /**
-  * @brief          设置舵机高电平脉宽，限幅到 500～2500 μs；停止输出后也可直接恢复
+  * @brief          设置舵机高电平脉宽，分球通道限幅 500～2500 μs，俯仰通道限幅 1000～2000 μs
   * @param[in]      servo: SERVO_BALL_SEPARATOR 或 SERVO_LAUNCHER_PITCH
   * @param[in]      pulse_us: 脉宽，单位 μs
   * @retval         无；无效编号忽略
   */
 void servo_pwm_set_us(servo_id_t servo, uint16_t pulse_us);
 /**
-  * @brief          设置舵机目标角度，大舵机限幅 0～305°，小舵机限幅 0～180°
+  * @brief          设置舵机目标角度，分球通道限幅 0～305°，俯仰通道限幅 0～90°
   * @param[in]      servo: SERVO_BALL_SEPARATOR 或 SERVO_LAUNCHER_PITCH
   * @param[in]      angle_deg: 角度，单位度，NaN/Inf 忽略
   * @note           角度是指令值，没有实际角度反馈

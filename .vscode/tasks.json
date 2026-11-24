@@ -2,21 +2,52 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "配置 Release",
+            "type": "process",
+            "command": "${env:LOCALAPPDATA}/stm32cube/bundles/cmake/4.4.0+st.1/bin/cmake.exe",
+            "args": [
+                "--preset",
+                "Release"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "编译 Release",
+            "type": "process",
+            "command": "${env:LOCALAPPDATA}/stm32cube/bundles/cmake/4.4.0+st.1/bin/cmake.exe",
+            "args": [
+                "--build",
+                "--preset",
+                "Release",
+                "--parallel"
+            ],
+            "dependsOn": "配置 Release",
+            "problemMatcher": "$gcc"
+        },
+        {
             "label": "烧录",
             "type": "process",
-            "command": "/usr/bin/openocd",
+            "command": "${env:LOCALAPPDATA}/stm32cube/bundles/programmer/2.23.0/bin/STM32_Programmer_CLI.exe",
             "args": [
-                "-f",
-                "interface/stlink.cfg",
-                "-f",
-                "target/stm32f4x.cfg",
                 "-c",
-                "program build/Release/robotmaster_c_tennis.elf verify reset exit"
+                "port=SWD",
+                "freq=4000",
+                "-w",
+                "robotmaster_c_tennis.elf",
+                "-v",
+                "-rst"
             ],
             "options": {
-                "cwd": "${workspaceFolder}"
+                "cwd": "${workspaceFolder}/build/Release"
             },
-            "problemMatcher": []
+            "problemMatcher": [],
+            "dependsOn": "编译 Release"
         }
-    ]
+    ],
+    "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+            "PATH": "${env:LOCALAPPDATA}/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin;${env:LOCALAPPDATA}/stm32cube/bundles/ninja/1.13.2+st.1/bin;${env:PATH}"
+        }
+    }
 }

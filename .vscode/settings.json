@@ -1,8 +1,5 @@
 {
-    "cmake.cmakePath": "cube-cmake",
-    "cmake.configureArgs": [
-        "-DCMAKE_COMMAND=cube-cmake"
-    ],
+    "cmake.cmakePath": "${env:LOCALAPPDATA}/stm32cube/bundles/cmake/4.4.0+st.1/bin/cmake.exe",
     "cmake.preferredGenerators": [
         "Ninja"
     ],
@@ -19,5 +16,8 @@
             "task": "烧录",
             "tooltip": "通过 ST-LINK 烧录、校验并复位目标芯片"
         }
-    ]
+    ],
+    "cmake.environment": {
+        "PATH": "${env:LOCALAPPDATA}/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin;${env:LOCALAPPDATA}/stm32cube/bundles/ninja/1.13.2+st.1/bin;${env:PATH}"
+    }
 }
